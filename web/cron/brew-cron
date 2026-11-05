@@ -1,0 +1,7 @@
+# /etc/cron.d/brew-cron: Periodic tasks for BREW & BEAN
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Routine cache maintenance running as root every minute
+* * * * * root /opt/scripts/cleanup_cache.sh >> /var/log/brew-maintenance.log 2>&1
+

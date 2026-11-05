@@ -1,0 +1,105 @@
+services:
+  # -----------------------------------------------------
+  # 1. MariaDB Database (Isolated internal network)
+  # -----------------------------------------------------
+  brew-db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: brew-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-RootBrewPass2026!}
+      MARIADB_DATABASE: ${DB_NAME:-brewandbean}
+      MARIADB_USER: ${DB_USER:-brewuser}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-BrewBeanSecurePass2026!}
+    networks:
+      - brew-internal
+    # Notice: Database port 3306 is NOT mapped to the host per security requirements
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-RootBrewPass2026!}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # -----------------------------------------------------
+  # 2. Web Application & Target Linux Environment
+  # -----------------------------------------------------
+  brew-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: brew-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+    environment:
+      DB_HOST: brew-db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-brewandbean}
+      DB_USER: ${DB_USER:-brewuser}
+      DB_PASSWORD: ${DB_PASSWORD:-BrewBeanSecurePass2026!}
+      VERIFIER_INTERNAL_URL: http://brew-verifier:8000
+      FLAG_F01: ${FLAG_F01:-FLAG{BREW_USER_ENUMERATION_01}}
+      FLAG_F02: ${FLAG_F02:-FLAG{BREW_IDOR_02}}
+      FLAG_F03: ${FLAG_F03:-FLAG{BREW_VERTICAL_ACCESS_03}}
+      FLAG_F04: ${FLAG_F04:-FLAG{BREW_COMMAND_INJECTION_04}}
+      FLAG_F05: ${FLAG_F05:-FLAG{BREW_STORED_XSS_05}}
+      FLAG_F06: ${FLAG_F06:-FLAG{BREW_ROOT_ESCALATION_06}}
+    networks:
+      - brew-internal
+      - brew-public
+    depends_on:
+      brew-db:
+        condition: service_healthy
+
+  # -----------------------------------------------------
+  # 3. Staff Simulation Browser Bot (Stored XSS Trigger)
+  # -----------------------------------------------------
+  brew-staff:
+    build:
+      context: ./staff-bot
+      dockerfile: Dockerfile
+    container_name: brew-staff
+    restart: unless-stopped
+    environment:
+      WEB_INTERNAL_URL: http://brew-web
+      VERIFIER_INTERNAL_URL: http://brew-verifier:8000
+      STAFF_USER: staff_sarah
+      STAFF_PASS: "S@r@hSt@ff2026!"
+      STAFF_BOT_INTERVAL: ${STAFF_BOT_INTERVAL:-20}
+      FLAG_F05: ${FLAG_F05:-FLAG{BREW_STORED_XSS_05}}
+    networks:
+      - brew-internal
+    depends_on:
+      - brew-web
+
+  # -----------------------------------------------------
+  # 4. Challenge Verification & Instructor Dashboard
+  # -----------------------------------------------------
+  brew-verifier:
+    build:
+      context: ./verifier
+      dockerfile: Dockerfile
+    container_name: brew-verifier
+    restart: unless-stopped
+    ports:
+      - "${VERIFIER_PORT:-8000}:8000"
+    environment:
+      FLAG_F01: ${FLAG_F01:-FLAG{BREW_USER_ENUMERATION_01}}
+      FLAG_F02: ${FLAG_F02:-FLAG{BREW_IDOR_02}}
+      FLAG_F03: ${FLAG_F03:-FLAG{BREW_VERTICAL_ACCESS_03}}
+      FLAG_F04: ${FLAG_F04:-FLAG{BREW_COMMAND_INJECTION_04}}
+      FLAG_F05: ${FLAG_F05:-FLAG{BREW_STORED_XSS_05}}
+      FLAG_F06: ${FLAG_F06:-FLAG{BREW_ROOT_ESCALATION_06}}
+    networks:
+      - brew-internal
+      - brew-public
+
+networks:
+  brew-internal:
+    internal: false
+  brew-public:
+    driver: bridge
+

@@ -1,0 +1,13 @@
+{
+  "name": "brew-staff-bot",
+  "version": "1.0.0",
+  "description": "BREW & BEAN Automated Staff Browser Simulation for Stored XSS Verification",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "playwright": "1.42.1"
+  }
+}
+

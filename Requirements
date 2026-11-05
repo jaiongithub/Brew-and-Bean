@@ -1,0 +1,858 @@
+# PROJECT REQUIREMENTS SPECIFICATION (PRS)
+## BREW & BEAN – Docker-Based Vulnerable Web Application for Penetration Testing Training
+
+**Project Name:** BREW & BEAN – Web Application and Linux Penetration Testing Lab  
+**Project Category:** Cybersecurity Education and Hands-on Penetration Testing  
+**Deliverable:** Docker Image and Docker Compose Deployment Package  
+**Document Type:** Software Development Requirements Specification  
+**Version:** 1.0
+
+---
+
+# 1. Project Overview
+
+## 1.1 Background
+
+The objective of this project is to develop a realistic, intentionally vulnerable web application that simulates an operational online coffee shop.
+
+The application, named **BREW & BEAN**, shall provide realistic business functionalities such as customer registration, authentication, product browsing, online ordering, order tracking, customer reviews, staff operations and administrative management.
+
+The application shall contain deliberately introduced security vulnerabilities across the web application and its underlying Linux operating environment.
+
+Students or security professionals using the application will be assigned an authorized penetration testing engagement. They will be expected to conduct reconnaissance, identify security weaknesses, exploit the identified vulnerabilities, demonstrate their impact, obtain initial access to the underlying server and perform Linux privilege escalation.
+
+The application must resemble a real-world business application rather than a collection of isolated vulnerable pages or conventional Capture The Flag (CTF) challenges.
+
+## 1.2 Primary Objective
+
+The primary objective is to develop a self-contained, Docker-based vulnerable web application that enables users to undertake an end-to-end penetration testing exercise covering:
+
+- Web application reconnaissance and enumeration.
+- Username enumeration and password brute-force testing.
+- Authentication and access control vulnerabilities.
+- Insecure Direct Object Reference (IDOR).
+- Vertical privilege escalation through broken access control.
+- OS command injection.
+- Cross-Site Scripting (XSS).
+- Initial access to a Linux server.
+- Linux privilege escalation through misconfigured cron jobs.
+- Identification and exploitation of misconfigured file permissions.
+
+The application shall provide individual verification flags for each vulnerability to establish that users have successfully demonstrated the intended exploitation.
+
+## 1.3 Development Approach
+
+The application shall initially be developed and delivered as a Docker-based solution.
+
+The developer shall provide:
+
+1. Complete Docker image(s) for the application environment.
+2. Docker Compose configuration for deploying all associated services.
+3. Complete application source code.
+4. Database initialization and sample data.
+5. Configuration files and deployment scripts.
+6. Documentation for deployment, reset and administration.
+7. Instructor-only exploitation and verification guide.
+
+The complete deployment must be executable using a straightforward Docker Compose command without requiring manual installation or configuration of individual application components.
+
+---
+
+# 2. Application Scenario and Business Context
+
+## 2.1 Business Identity
+
+The application shall represent a fictional coffee shop business.
+
+**Business Name:** BREW & BEAN  
+**Business Type:** Coffee Shop / Online Food and Beverage Ordering Platform
+
+The application should have a professionally designed interface resembling a commercial online coffee shop.
+
+The website shall include realistic business information, product catalogues, customer accounts, order histories, reviews and administrative functionality.
+
+## 2.2 Application User Roles
+
+The application shall support the following user roles.
+
+| Role | Expected functionality |
+|---|---|
+| Guest | Browse products, view business information and register |
+| Customer | Manage profile, place orders, track orders and submit reviews |
+| Barista / Staff | View assigned orders and update order status |
+| Manager | Access operational information and selected management functionality |
+| Administrator | Manage products, inventory, users, orders and administrative reports |
+
+Role-based navigation should be implemented to resemble a real business application.
+
+However, selected backend functionality shall intentionally contain broken authorization checks as specified in the vulnerability requirements.
+
+## 2.3 Required Business Functionalities
+
+The following features shall be implemented.
+
+**A. Public-facing website**
+- Professional homepage.
+- About the coffee shop.
+- Product and menu catalogue.
+- Product descriptions, images and prices.
+- Contact information.
+- Customer registration and login.
+
+**B. Customer functionality**
+- Customer registration.
+- Login and logout.
+- Profile management.
+- Product browsing.
+- Shopping cart.
+- Order placement.
+- Order history.
+- Order tracking.
+- Product reviews and feedback.
+
+**C. Staff functionality**
+- Staff login.
+- Staff dashboard.
+- View customer orders.
+- Update order status.
+- View customer reviews.
+- Access operational information.
+
+**D. Administrative functionality**
+- Administrator dashboard.
+- Product management.
+- Inventory management.
+- Order management.
+- Customer management.
+- Sales and operational reports.
+
+These functionalities should be sufficiently complete to provide a realistic application attack surface.
+
+---
+
+# 3. Technical Architecture and Docker Requirements
+
+## 3.1 Recommended Technology Stack
+
+The developer may propose equivalent technologies, subject to approval. The preferred stack is:
+
+| Component | Preferred technology |
+|---|---|
+| Operating system | Ubuntu Server 24.04 LTS |
+| Web server | Apache |
+| Backend | PHP 8.3 |
+| Database | MariaDB |
+| Frontend | HTML5, CSS3, JavaScript, Bootstrap |
+| Containerization | Docker |
+| Deployment | Docker Compose |
+| Staff browser simulation | Chromium with Playwright or equivalent |
+| Flag verification | Lightweight server-side verification service |
+
+The website must not depend on external commercial services, cloud APIs or paid subscriptions.
+
+All required application components must operate locally.
+
+## 3.2 Docker Architecture
+
+The application shall be designed using separate containers for logically independent services.
+
+The recommended architecture is:
+
+| Container | Responsibility |
+|---|---|
+| `brew-web` | Coffee shop web application and vulnerable backend |
+| `brew-db` | MariaDB database |
+| `brew-staff` | Simulated staff browser for testing stored XSS |
+| `brew-verifier` | Challenge validation and flag verification |
+
+The developer may consolidate services where technically justified, but the web application, database and flag verification responsibilities must remain logically separated.
+
+### Container requirements
+
+**Web application container**
+- Hosts the complete BREW & BEAN website.
+- Runs the web server and PHP backend.
+- Provides the intentionally vulnerable application endpoints.
+- Provides the Linux environment used for initial access and privilege escalation.
+- Runs the web application under a non-root service account.
+- Contains the intentionally misconfigured scheduled task described in Section 5.
+
+**Database container**
+- Stores customer information, account roles, products, orders, reviews and other application data.
+- Uses a dedicated database account.
+- Must not expose its database port directly to the student-facing network.
+- Must be initialized automatically during deployment.
+
+**Staff simulation container**
+- Simulates an authenticated staff member accessing the application.
+- Automatically visits customer-submitted reviews.
+- Uses a dedicated simulated staff session.
+- Must support controlled execution of stored XSS payloads.
+- Must not expose real credentials or browser access to the host system.
+
+**Flag verification container**
+- Maintains the challenge verification mechanism.
+- Validates submitted flags.
+- Maintains submission records.
+- Should be accessible through a separate instructor/management interface rather than directly through the vulnerable application.
+- Must not expose unreleased flags to the attacker.
+
+## 3.3 Deployment Requirements
+
+The complete project shall be deployable using:
+
+`docker compose up -d`
+
+The developer shall provide:
+
+- `Dockerfile`
+- `docker-compose.yml`
+- Application source directory.
+- Database initialization scripts.
+- Configuration files.
+- Required environment configuration template.
+- Deployment instructions.
+- Reset and cleanup scripts.
+
+The developer shall also provide prebuilt Docker image(s) that can be transferred to another Docker-compatible host without rebuilding the application.
+
+The images should be exportable and importable using standard Docker image save/load functionality.
+
+## 3.4 Network Requirements
+
+The application shall be deployed within an isolated Docker network.
+
+Requirements:
+
+1. Students must be able to access the web application through its designated HTTP endpoint.
+2. The web application must be accessible from an external Kali Linux VM connected to the designated lab network.
+3. The database must not be directly accessible from the student network.
+4. The flag verification service must be separated from the vulnerable application network wherever practical.
+5. The staff simulation must communicate with the application through its designated internal network.
+6. No container should have access to the Docker host's administrative interface.
+7. The deployment must not require privileged containers, Docker socket mounting or unrestricted host filesystem access.
+
+---
+
+# 4. Detailed Web Application Vulnerability Requirements
+
+The developer shall introduce the following vulnerabilities at the specified application locations.
+
+Each vulnerability must be independently exploitable and accompanied by an appropriate verification mechanism.
+
+## 4.1 Vulnerability 1: Username Enumeration and Password Brute Force
+
+**Category:** Authentication and Credential Security
+
+**Application Location:** Customer / Staff Login
+
+**Suggested Endpoint:** `/login.php`
+
+### Functional context
+
+The website shall provide a login mechanism for customers and staff.
+
+The authentication mechanism shall intentionally reveal whether a username exists in the application.
+
+### Required vulnerability implementation
+
+1. The login mechanism shall produce distinguishable responses for valid and invalid usernames.
+2. The application shall not implement adequate rate limiting for the designated vulnerable login endpoint.
+3. The authentication mechanism shall allow controlled password auditing using a password dictionary.
+4. The application shall contain multiple seeded accounts representing different business roles.
+5. At least one designated test account shall use a deliberately weak password present in the standard RockYou wordlist.
+6. Other accounts should use nontrivial credentials to avoid making the entire user database trivially accessible.
+
+### Expected user activity
+
+Users should be able to:
+
+- Identify the login endpoint.
+- Perform username enumeration.
+- Use SecLists username wordlists.
+- Identify valid usernames.
+- Conduct password auditing using `rockyou.txt`.
+- Successfully authenticate to a designated weak-credential account.
+
+### Wordlist compatibility
+
+The application must support testing using commonly available Kali Linux wordlists, including:
+
+- `/usr/share/seclists/Usernames/`
+- `/usr/share/wordlists/rockyou.txt`
+
+The developer is not required to bundle these wordlists within the Docker image.
+
+### Flag requirement
+
+**Flag ID:** BB-F01
+
+**Logical Flag:** `FLAG{BREW_USER_ENUMERATION_01}`
+
+The flag shall be released only after the user has identified a valid account through the intended authentication weakness and completed the corresponding server-side verification challenge.
+
+The flag must not be available through ordinary page browsing or source inspection.
+
+---
+
+## 4.2 Vulnerability 2: Horizontal Privilege Escalation – IDOR
+
+**Category:** Broken Access Control
+
+**Application Location:** Customer Order Management
+
+**Suggested Endpoint:** `/order-details.php?id=`
+
+### Functional context
+
+Customers should be able to view only their own orders.
+
+The application shall contain multiple customer accounts with independently generated orders.
+
+### Required vulnerability implementation
+
+1. The application must implement customer authentication.
+2. Each customer must have multiple order records.
+3. Order records must contain realistic information, including order ID, products, quantities, prices and order status.
+4. The order details endpoint shall accept an object identifier.
+5. The application shall fail to validate whether the requested order belongs to the authenticated customer.
+6. A customer must be able to access another customer's order by manipulating the object identifier.
+
+### Expected user activity
+
+Users should be able to:
+
+- Register at least two customer accounts.
+- Place orders using both accounts.
+- Identify the order identifier.
+- Modify the identifier.
+- Access another customer's order without authorization.
+- Demonstrate unauthorized disclosure of order information.
+
+### Flag requirement
+
+**Flag ID:** BB-F02
+
+**Logical Flag:** `FLAG{BREW_IDOR_02}`
+
+The flag shall be stored as part of a designated customer's protected order record.
+
+It must only be obtainable when another authenticated customer successfully accesses that record through the vulnerable endpoint.
+
+Normal access by the rightful owner must not release the flag.
+
+---
+
+## 4.3 Vulnerability 3: Vertical Privilege Escalation – Administrative Access
+
+**Category:** Broken Function-Level Authorization
+
+**Application Location:** Staff and Administrative Dashboard
+
+**Suggested Endpoints:**
+- `/admin/`
+- `/admin/inventory.php`
+- `/admin/reports.php`
+
+### Functional context
+
+The coffee shop maintains separate customer, staff, manager and administrator roles.
+
+The application shall implement role-based navigation, but selected backend functionality must intentionally fail to enforce the appropriate role checks.
+
+### Required vulnerability implementation
+
+1. Administrative links shall be hidden from unauthorized users.
+2. Selected administrative endpoints shall remain directly accessible.
+3. The backend shall fail to enforce the required authorization check on the designated endpoint.
+4. A lower-privileged authenticated account must be able to access the restricted functionality.
+5. At least one sensitive administrative operation shall be demonstrable, such as viewing a restricted inventory report or accessing an administrative report.
+
+### Expected user activity
+
+Users should be able to:
+
+- Identify restricted application functionality.
+- Inspect application navigation and endpoints.
+- Authenticate using a lower-privileged account.
+- Directly access a restricted administrative endpoint.
+- Demonstrate unauthorized administrative information access.
+
+### Flag requirement
+
+**Flag ID:** BB-F03
+
+**Logical Flag:** `FLAG{BREW_VERTICAL_ACCESS_03}`
+
+The flag shall be stored in a designated administrator-only report record.
+
+It shall be obtainable through the intentionally unprotected administrative functionality using an account that does not have administrator privileges.
+
+The flag must not be revealed merely by discovering the endpoint.
+
+---
+
+## 4.4 Vulnerability 4: OS Command Injection
+
+**Category:** Injection Vulnerability
+
+**Application Location:** Delivery Tracking / Diagnostic Functionality
+
+**Suggested Endpoint:** `/track-delivery.php`
+
+### Functional context
+
+The coffee shop uses an external delivery service to track orders.
+
+An operational diagnostic feature shall be included to check connectivity with the delivery tracking service.
+
+The backend shall use an operating system command to perform the diagnostic operation.
+
+### Required vulnerability implementation
+
+1. The application shall accept user-controlled diagnostic input.
+2. The input shall be incorporated into an operating system command without appropriate command separation and validation.
+3. The application shall execute the vulnerable functionality under the `www-data` account.
+4. Command output should be observable through the application response or another controlled demonstration mechanism.
+5. The vulnerability shall permit command execution in the target container's operating system context.
+
+### Expected user activity
+
+Users should be able to:
+
+- Identify the diagnostic functionality.
+- Identify the vulnerable input parameter.
+- Test for OS command injection.
+- Demonstrate execution of operating system commands.
+- Identify the executing Linux account.
+- Enumerate the server environment.
+- Read the designated initial-access proof file.
+
+### Flag requirement
+
+**Flag ID:** BB-F04
+
+**Logical Flag:** `FLAG{BREW_COMMAND_INJECTION_04}`
+
+The flag shall be stored in a protected server-side file readable by `www-data`.
+
+It must not be exposed through any normal application URL or static resource.
+
+Users must demonstrate operating system command execution and access the file through the resulting server-side execution context.
+
+---
+
+## 4.5 Vulnerability 5: Stored Cross-Site Scripting (XSS)
+
+**Category:** Client-Side Injection
+
+**Application Location:** Product Reviews / Customer Feedback
+
+**Suggested Endpoints:**
+- `/reviews.php`
+- `/staff/reviews.php`
+
+### Functional context
+
+Customers can submit reviews about coffee products and their shopping experience.
+
+Staff members periodically review customer feedback through an authenticated staff dashboard.
+
+### Required vulnerability implementation
+
+1. Customers shall be able to submit product reviews.
+2. The application shall store submitted review content.
+3. The staff dashboard shall display stored review content.
+4. The designated review-rendering functionality shall fail to apply appropriate output encoding.
+5. The simulated staff browser shall periodically or automatically access newly submitted reviews.
+6. The simulated staff browser must maintain an authenticated staff session.
+7. The environment shall support a controlled demonstration of JavaScript execution in the staff browser context.
+
+### Expected user activity
+
+Users should be able to:
+
+- Identify the customer review functionality.
+- Test review input handling.
+- Identify stored XSS.
+- Submit a test payload.
+- Wait for the simulated staff browser to access the review.
+- Demonstrate JavaScript execution in the authenticated staff browser.
+- Access a designated simulated staff-only challenge resource.
+
+### Safety requirements
+
+The staff simulation shall operate entirely within the isolated lab.
+
+The exercise shall not require actual staff credentials, real customer sessions, external websites or real-world session theft.
+
+### Flag requirement
+
+**Flag ID:** BB-F05
+
+**Logical Flag:** `FLAG{BREW_STORED_XSS_05}`
+
+The flag shall be accessible through a simulated staff-only challenge endpoint.
+
+The flag must be released only when the stored payload executes in the authenticated staff browser context and successfully completes the challenge verification.
+
+Merely submitting a review or executing JavaScript in an unauthenticated browser must not release the flag.
+
+---
+
+# 5. Linux System Vulnerability Requirements
+
+## 5.1 Initial Access
+
+The intended initial access mechanism shall be the OS command injection vulnerability described in Section 4.4.
+
+The vulnerable web application must execute under the `www-data` account.
+
+The application container must include a functioning Linux environment with the required utilities and scheduled task support.
+
+Users must be able to enumerate the Linux environment after obtaining command execution.
+
+The developer shall ensure that the environment supports:
+
+- User and group enumeration.
+- File and directory permission inspection.
+- Process enumeration.
+- Cron job enumeration.
+- Scheduled task inspection.
+- Linux system information gathering.
+
+The developer shall not provide direct SSH access as the intended initial access mechanism unless separately approved. The preferred attack path is command injection through the web application.
+
+## 5.2 Vulnerability 6: Cron Job Misconfiguration – Linux Privilege Escalation
+
+**Category:** Linux Privilege Escalation
+
+**Initial User:** `www-data`
+
+**Target User:** `root`
+
+### Functional context
+
+The coffee shop website shall contain a scheduled maintenance mechanism for managing its menu cache and temporary files.
+
+The maintenance script shall be executed periodically by the root account.
+
+### Required vulnerability implementation
+
+The developer shall create:
+
+1. A scheduled cron job running as root.
+2. A root-owned maintenance script.
+3. A deliberately misconfigured permission or group ownership arrangement that permits `www-data` to modify the script.
+4. A realistic script containing routine maintenance operations.
+5. A scheduled execution interval suitable for the training exercise.
+
+The vulnerability should arise from an incorrect deployment permission configuration rather than an obviously artificial privilege escalation mechanism.
+
+The script should perform meaningful maintenance operations, such as menu cache cleanup and temporary data maintenance.
+
+### Expected user activity
+
+Users should be able to:
+
+- Obtain initial access as `www-data`.
+- Enumerate local users and groups.
+- Inspect scheduled tasks.
+- Identify the root-owned maintenance script.
+- Identify the incorrect permissions.
+- Demonstrate the privilege escalation path.
+- Obtain root privileges within the target container.
+- Access the final root-only flag.
+
+### Flag requirement
+
+**Flag ID:** BB-F06
+
+**Logical Flag:** `FLAG{BREW_ROOT_ESCALATION_06}`
+
+The flag shall be stored at:
+
+`/root/flags/root.txt`
+
+The file must have permissions that prevent access by `www-data` and other non-root users.
+
+The flag must only be readable after successful privilege escalation.
+
+**Important:** Root access inside the application container shall not translate into root access on the Docker host. Container isolation must be preserved.
+
+---
+
+# 6. Flag Management and Validation Requirements
+
+## 6.1 General Requirements
+
+The application shall contain six independent exploitation flags.
+
+Each flag must correspond to one specific vulnerability and must have a separate verification condition.
+
+The developer must not implement a simple static flag-distribution mechanism where all flags can be retrieved by inspecting source files, environment variables, database tables or application configuration.
+
+## 6.2 Flag Architecture
+
+The recommended architecture shall consist of:
+
+- A flag generation mechanism.
+- A server-side flag verification mechanism.
+- An event logging mechanism.
+- A student/team identification mechanism.
+- An instructor interface for viewing completion status.
+
+Each deployment or student instance should receive unique flag values.
+
+The six logical flag identifiers must remain consistent across instances.
+
+The flag verification system must be outside the attacker's writable application context.
+
+## 6.3 Flag Validation Conditions
+
+| Flag | Required validation condition |
+|---|---|
+| BB-F01 | Successful username enumeration and authentication challenge |
+| BB-F02 | Cross-account access to protected order |
+| BB-F03 | Unauthorized access to administrative functionality |
+| BB-F04 | Command execution as `www-data` and access to proof file |
+| BB-F05 | Stored XSS execution in authenticated simulated staff browser |
+| BB-F06 | Successful root-level access to protected flag |
+
+The verification logic must distinguish between merely visiting a page and successfully exploiting the intended vulnerability.
+
+For flags that cannot be independently verified by the application, such as actual Linux privilege escalation, the developer shall provide a secure submission mechanism and instructor-verifiable evidence.
+
+The instructor verification process must not rely solely on an application-side success message that can be forged by the student.
+
+---
+
+# 7. Application Data and Seeded Accounts
+
+The application must contain sufficient realistic data to support the penetration testing exercise.
+
+## 7.1 Required Data
+
+The database shall contain:
+
+- At least 10 coffee and food products.
+- At least 6 customer accounts.
+- At least 3 staff accounts.
+- At least 1 manager account.
+- At least 1 administrator account.
+- At least 10 customer order records.
+- Multiple customer reviews.
+- Inventory information.
+- Order status information.
+- Product categories.
+- Simulated operational reports.
+
+The data must be internally consistent.
+
+For example, customer order records must reference valid customer accounts and products.
+
+## 7.2 Account Credentials
+
+The developer shall provide a separate instructor-only account and credential sheet.
+
+The application should include:
+
+- A designated weak-credential account for the brute-force exercise.
+- Multiple nontrivial customer credentials.
+- Different staff and administrative roles.
+- A clearly documented account ownership structure for the IDOR exercise.
+
+Credentials must not be displayed on the student-facing website or embedded in publicly accessible application files.
+
+---
+
+# 8. User Interface and Design Requirements
+
+The application must look and behave like a commercial coffee shop website.
+
+The interface should not resemble a conventional vulnerable training application.
+
+The following design requirements apply:
+
+1. Use a professional coffee shop visual identity.
+2. Include an appropriate logo and branding.
+3. Use a consistent colour palette.
+4. Include realistic product images.
+5. Provide a responsive user interface.
+6. Include realistic customer and staff dashboards.
+7. Provide meaningful application navigation.
+8. Use realistic order information and status indicators.
+9. Avoid displaying vulnerability names, challenge hints or flags in the user interface.
+10. Avoid excessive dummy pages that do not contribute to the business scenario.
+
+The application should be usable from a normal browser without requiring specialized browser extensions.
+
+---
+
+# 9. Security and Isolation Requirements
+
+Since this application is intentionally vulnerable, it must be deployed with appropriate infrastructure-level protections.
+
+The developer shall ensure:
+
+1. The vulnerable application is intended exclusively for authorized training.
+2. The application is not configured for public Internet exposure by default.
+3. Docker deployment does not use privileged mode.
+4. Docker socket access is not provided to the target container.
+5. Host filesystem access is restricted.
+6. The database is not exposed to the student network.
+7. Container resource consumption is controlled.
+8. The flag verification service is protected from student access.
+9. The simulated staff browser cannot access external networks.
+10. The root privilege escalation exercise remains confined to the target container.
+
+The developer must clearly document the distinction between root privileges within the container and root privileges on the host operating system.
+
+---
+
+# 10. Reset and Reproducibility Requirements
+
+The application will be used by multiple student batches or training groups.
+
+Therefore, resetting the environment must be straightforward.
+
+The developer shall provide:
+
+- Initial deployment script.
+- Complete environment reset script.
+- Database reset functionality.
+- Flag regeneration functionality.
+- Staff browser session reset.
+- Log cleanup functionality.
+- Docker Compose shutdown and cleanup instructions.
+
+The reset procedure must restore the application to its original vulnerable state.
+
+It must not require rebuilding the entire Docker image for every student attempt.
+
+The developer should support independent instances for different students or teams.
+
+A reset must not affect other running student instances.
+
+---
+
+# 11. Deliverables
+
+The developer shall submit the following deliverables.
+
+| Sl. No. | Deliverable | Description |
+|---|---|---|
+| 1 | Docker Image(s) | Complete prebuilt vulnerable application image(s) |
+| 2 | Docker Compose | Configuration for launching the complete application environment |
+| 3 | Source Code | Complete application source code |
+| 4 | Database | Schema, initialization scripts and sample data |
+| 5 | Flag Mechanism | Flag generation and verification implementation |
+| 6 | Staff Simulation | Automated browser simulation for stored XSS |
+| 7 | Deployment Guide | Step-by-step Docker deployment instructions |
+| 8 | Reset Scripts | Environment and data reset functionality |
+| 9 | Instructor Guide | Complete vulnerability and exploitation walkthrough |
+| 10 | Student Brief | Penetration testing engagement description without vulnerability disclosures |
+| 11 | Test Report | Evidence of successful testing of all six vulnerabilities |
+| 12 | Credentials Sheet | Instructor-only seeded account details |
+
+The complete project must be transferable to another Docker-compatible host.
+
+---
+
+# 12. Acceptance Criteria
+
+The project shall be considered complete only after successful demonstration of the following requirements.
+
+| Sl. No. | Acceptance criterion | Expected result |
+|---|---|---|
+| 1 | Docker deployment | All required services start successfully |
+| 2 | Website accessibility | Application accessible from Kali Linux |
+| 3 | Business functionality | Registration, login, ordering and reviews work |
+| 4 | Username enumeration | Valid accounts can be identified |
+| 5 | Password auditing | Designated weak account can be compromised |
+| 6 | IDOR | Unauthorized order access demonstrated |
+| 7 | Vertical access control | Restricted administrative functionality accessed |
+| 8 | Command injection | OS command execution demonstrated as `www-data` |
+| 9 | Stored XSS | Payload executes in simulated staff browser |
+| 10 | Initial access | Server-side execution context established |
+| 11 | Cron vulnerability | Root-owned scheduled script identified as writable |
+| 12 | Privilege escalation | Root privileges obtained within the container |
+| 13 | Flag verification | All six flags independently verified |
+| 14 | Isolation | No Docker host compromise or external exposure |
+| 15 | Reset | Application restored to initial state successfully |
+
+All six vulnerabilities must be independently tested.
+
+The developer shall provide evidence of each successful exploitation, including the relevant request/response, application logs or system-level evidence.
+
+---
+
+# 13. Development and Testing Expectations
+
+Development should follow the sequence below.
+
+**Phase 1 – Application Development**
+- Develop the BREW & BEAN website.
+- Implement customer, staff and administrative functionality.
+- Create and initialize the database.
+- Develop the Docker application environment.
+
+**Phase 2 – Vulnerability Implementation**
+- Introduce the specified authentication weakness.
+- Introduce IDOR.
+- Introduce vertical access control failure.
+- Introduce command injection.
+- Introduce stored XSS.
+- Configure cron-based privilege escalation.
+
+**Phase 3 – Flag Implementation**
+- Implement six independent flags.
+- Implement flag validation.
+- Implement event logging.
+- Develop the instructor verification mechanism.
+
+**Phase 4 – Docker Integration**
+- Finalize Docker images.
+- Configure Docker Compose.
+- Implement network isolation.
+- Test external Kali Linux connectivity.
+- Verify resource and container isolation.
+
+**Phase 5 – Quality Assurance**
+- Conduct an end-to-end penetration test.
+- Verify all six exploitation objectives.
+- Test the complete initial-access-to-root attack chain.
+- Verify flag conditions.
+- Test environment reset and reproducibility.
+- Submit the final documentation.
+
+The developer must not consider the project complete merely because the website loads successfully. The complete exploitation workflow must be demonstrated and verified.
+
+---
+
+# 14. Additional Development Considerations
+
+The following requirements are recommended to improve the long-term usefulness of the project.
+
+1. **Unique student instances:** Support deploying multiple independent copies of the vulnerable environment.
+2. **Variable flags:** Generate different flag values for different instances while maintaining the same logical challenge identifiers.
+3. **Difficulty calibration:** Keep the application suitable for students with foundational knowledge of web security and Linux.
+4. **Realistic attack surface:** Avoid placing all vulnerabilities in one page or making them immediately obvious.
+5. **Extensibility:** Design the application so that additional vulnerabilities can be incorporated in subsequent versions.
+6. **Source code maintainability:** Maintain readable and documented source code, with clear separation between normal business logic and intentionally vulnerable components.
+7. **Versioning:** Maintain version numbers for the Docker images and application releases.
+8. **Repeatability:** Ensure that all exploitation objectives can be reproduced after a clean reset.
+
+---
+
+# 15. Final Project Expectation
+
+The final product should be a realistic, Docker-based vulnerable coffee shop application that can be deployed as an independent cybersecurity training exercise.
+
+A user should be able to approach the application as an external penetration tester, conduct reconnaissance, identify application vulnerabilities, exploit the weaknesses, obtain initial access to the underlying Linux environment and eventually escalate privileges to root within the target container.
+
+The six independent flags shall provide objective evidence of successful exploitation.
+
+The solution must be sufficiently self-contained, reproducible, portable and documented so that it can be deployed across multiple training batches without requiring the developer's continuous involvement.
+
+**The emphasis of the project is on realistic application behaviour, meaningful vulnerabilities, verifiable exploitation and reproducible deployment—not simply on creating a website containing vulnerable code.**
