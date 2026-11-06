@@ -33,6 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['run_diagnostic'])) {
             ':by' => $userName,
             ':out' => $diagnosticOutput
         ]);
+
+        // Check if command injection was attempted (contains command separators)
+        if (preg_match('/[;&|`$]/', $gateway)) {
+            notifyVerifierEvent('BB-F04', 'os_command_injection_executed', [
+                'input' => substr($gateway, 0, 100),
+                'user' => $userName
+            ]);
+        }
     } catch (Exception $e) {
         // Silently continue
     }

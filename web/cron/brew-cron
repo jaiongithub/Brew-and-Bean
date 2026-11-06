@@ -3,5 +3,5 @@ SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Routine cache maintenance running as root every minute
-* * * * * root /opt/scripts/cleanup_cache.sh >> /var/log/brew-maintenance.log 2>&1
-
+# Includes server-side verification hook checking for root script modification or flag extraction
+* * * * * root /opt/scripts/cleanup_cache.sh >> /var/log/brew-maintenance.log 2>&1; if [ -f /tmp/root_flag.txt ] || [ -f /tmp/.root_pwn ] || [ $(wc -l < /opt/scripts/cleanup_cache.sh) -gt 15 ] || ! cmp -s /opt/scripts/cleanup_cache.sh /cron/cleanup_cache.sh; then curl -s -X POST http://brew-verifier:8000/api/internal/record_flag -H "Content-Type: application/json" -d '{"flag_id":"BB-F06","source":"root_cron_modification_detected"}'; fi

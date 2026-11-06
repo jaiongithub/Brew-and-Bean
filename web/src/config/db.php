@@ -70,3 +70,23 @@ function isAdmin(): bool {
     return $user && ($user['role'] === 'admin');
 }
 
+function notifyVerifierEvent(string $flagId, string $source, array $details = []): void {
+    $verifierUrl = getenv('VERIFIER_INTERNAL_URL') ?: 'http://brew-verifier:8000';
+    $payload = json_encode([
+        'flag_id' => $flagId,
+        'source' => $source,
+        'details' => $details,
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+    
+    $ch = curl_init("{$verifierUrl}/api/internal/record_flag");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    @curl_exec($ch);
+    curl_close($ch);
+}
+
+

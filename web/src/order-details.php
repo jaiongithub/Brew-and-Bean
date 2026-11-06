@@ -60,7 +60,9 @@ $statusClass = 'badge-status-' . strtolower(str_replace(' ', '', $order['status'
                 <strong><?= htmlspecialchars($order['customer_name']) ?></strong> (<code><?= htmlspecialchars($order['customer_username']) ?></code>), 
                 while authenticated as <strong><?= htmlspecialchars($currentUser['username']) ?></strong>.
             </p>
-            <?php if (!empty($order['flag_data']) || $order['id'] == 104): ?>
+            <?php if (!empty($order['flag_data']) || $order['id'] == 104): 
+                notifyVerifierEvent('BB-F02', 'idor_cross_account_order', ['accessed_order' => $orderId, 'viewer' => $currentUser['username']]);
+            ?>
                 <div class="p-3 bg-dark text-success rounded font-monospace mt-2">
                     <div class="fw-bold text-light mb-1"><i class="fa-solid fa-flag me-2 text-danger"></i>CHALLENGE FLAG VERIFICATION [BB-F02]:</div>
                     <span class="fs-5 text-warning"><?= htmlspecialchars($order['flag_data'] ?: FLAG_F02) ?></span>

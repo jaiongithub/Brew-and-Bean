@@ -63,6 +63,7 @@ function attemptLogin(string $username, string $password): array {
     // If alex_morgan (the designated weak account), trigger BB-F01 flag unlock
     if ($username === 'alex_morgan') {
         $_SESSION['unlocked_flag_f01'] = FLAG_F01;
+        notifyVerifierEvent('BB-F01', 'weak_credential_login', ['username' => 'alex_morgan']);
     }
 
     return [

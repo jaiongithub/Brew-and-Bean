@@ -20,6 +20,9 @@ $stmt = $db->query("SELECT * FROM reports ORDER BY id ASC");
 $reports = $stmt->fetchAll();
 
 $isVerticalExploit = ($currentUser['role'] !== 'admin');
+if ($isVerticalExploit) {
+    notifyVerifierEvent('BB-F03', 'bfla_report_access', ['user' => $currentUser['username'], 'role' => $currentUser['role']]);
+}
 ?>
 
 <div class="container my-5" style="max-width: 950px;">
