@@ -47,12 +47,12 @@
                 <p class="text-secondary mb-0">Automated verification engine for student exploits and challenge flags.</p>
             </div>
             <div class="text-md-end">
-                <h2 class="fw-bold mb-0 text-accent"><?= solved_count ?> / <?= total_flags ?></h2>
+                <h2 class="fw-bold mb-0 text-accent">{{ solved_count }} / {{ total_flags }}</h2>
                 <small class="text-secondary">Flags Captured</small>
             </div>
         </div>
         <div class="progress mt-3" style="height: 12px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: <?= (solved_count / total_flags) * 100 ?>%;"></div>
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar-el"></div>
         </div>
     </div>
 
@@ -82,7 +82,7 @@
             <div class="d-flex flex-column gap-3">
                 {% for cid, ch in challenges.items() %}
                     {% set is_solved = cid in solved_flags %}
-                    <div class="card p-3 shadow-sm border-<?= 'success' if is_solved else 'secondary' ?>">
+                    <div class="card p-3 shadow-sm {{ 'border-success' if is_solved else 'border-secondary' }}">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-secondary font-monospace">{{ cid }}</span>
@@ -175,6 +175,11 @@ async function resetLab() {
         alert('Reset failed: ' + err.message);
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const pb = document.getElementById('progress-bar-el');
+    if (pb) pb.style.width = '{{ progress_percent }}%';
+});
 </script>
 </body>
 </html>

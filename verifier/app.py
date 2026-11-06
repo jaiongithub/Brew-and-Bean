@@ -65,14 +65,18 @@ server_events = {}
 @app.route("/")
 @app.route("/instructor")
 def dashboard():
+    total = len(CHALLENGES)
+    solved = len(solved_flags)
+    progress = int((solved / total) * 100) if total else 0
     return render_template(
         "index.html",
         challenges=CHALLENGES,
         solved_flags=solved_flags,
         server_events=server_events,
         submissions=submissions,
-        total_flags=len(CHALLENGES),
-        solved_count=len(solved_flags)
+        total_flags=total,
+        solved_count=solved,
+        progress_percent=progress
     )
 
 @app.route("/api/submit_flag", methods=["POST"])
