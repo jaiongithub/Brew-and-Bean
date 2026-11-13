@@ -58,6 +58,14 @@ $allReviews = $stmt->fetchAll();
         </div>
     <?php endif; ?>
 
+    <!-- Staff Review Notice -->
+    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-4">
+        <i class="fa-solid fa-clock-rotate-left fs-4 text-primary me-3"></i>
+        <div>
+            <strong>Roastery Quality Assurance:</strong> Our dedicated barista team reviews and moderates all incoming customer feedback <u>every 10 seconds</u>. Refresh after submitting to see staff notes!
+        </div>
+    </div>
+
     <!-- Submit Review Form -->
     <div class="card shadow-sm border-0 mb-5">
         <div class="card-header bg-white py-3 border-bottom">
@@ -119,6 +127,13 @@ $allReviews = $stmt->fetchAll();
                     </div>
                     <!-- Public display is sanitized; Staff portal is the intended XSS sink! -->
                     <p class="text-dark mb-3"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
+
+                    <?php if (!empty($rev['staff_notes'])): ?>
+                        <div class="mt-2 mb-3 p-2 bg-light border-start border-4 border-success rounded small">
+                            <strong class="text-success d-block mb-1"><i class="fa-solid fa-mug-hot me-1"></i>Official Staff Response:</strong>
+                            <span class="text-dark font-monospace"><?= htmlspecialchars($rev['staff_notes']) ?></span>
+                        </div>
+                    <?php endif; ?>
                     <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top small text-muted">
                         <span class="fw-bold"><i class="fa-solid fa-circle-user me-1"></i><?= htmlspecialchars($rev['author_name']) ?></span>
                         <span><?= date('M d, Y', strtotime($rev['created_at'])) ?></span>

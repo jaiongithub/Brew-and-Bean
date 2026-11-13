@@ -98,7 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         <div class="card-footer bg-light text-center small text-muted py-3">
-            <i class="fa-solid fa-shield-halved me-1"></i> Authorized cafe members and staff access only.
+            <div><i class="fa-solid fa-shield-halved me-1"></i> Authorized cafe members and staff access only.</div>
+            <div class="mt-1" style="font-size:0.75rem;">
+                <i class="fa-solid fa-file-lines me-1 text-secondary"></i> Training Wordlists: 
+                <a href="/wordlists/usernames.txt" target="_blank" class="text-decoration-underline text-secondary">usernames.txt</a> &bull; 
+                <a href="/wordlists/passwords.txt" target="_blank" class="text-decoration-underline text-secondary">passwords.txt</a>
+            </div>
         </div>
     </div>
 </div>

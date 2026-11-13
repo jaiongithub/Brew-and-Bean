@@ -7,14 +7,22 @@ echo "[+] Initializing BREW & BEAN web environment..."
 mkdir -p /opt/flags /root/flags /var/log /opt/scripts /var/www/html/tmp/cache
 
 # Write Flag 4 (OS Command Injection initial access proof file)
-FLAG_F04_VAL="${FLAG_F04:-FLAG{BREW_COMMAND_INJECTION_04}}"
-echo "$FLAG_F04_VAL" > /opt/flags/flag4.txt
+if [ -n "$FLAG_F04" ]; then
+    FLAG_F04_VAL="$FLAG_F04"
+else
+    FLAG_F04_VAL="FLAG{BREW_COMMAND_INJECTION_04}"
+fi
+printf "%s\n" "$FLAG_F04_VAL" > /opt/flags/flag4.txt
 chown root:www-data /opt/flags/flag4.txt
 chmod 0644 /opt/flags/flag4.txt
 
 # Write Flag 6 (Root privilege escalation target)
-FLAG_F06_VAL="${FLAG_F06:-FLAG{BREW_ROOT_ESCALATION_06}}"
-echo "$FLAG_F06_VAL" > /root/flags/root.txt
+if [ -n "$FLAG_F06" ]; then
+    FLAG_F06_VAL="$FLAG_F06"
+else
+    FLAG_F06_VAL="FLAG{BREW_ROOT_ESCALATION_06}"
+fi
+printf "%s\n" "$FLAG_F06_VAL" > /root/flags/root.txt
 chown root:root /root/flags/root.txt
 chmod 0600 /root/flags/root.txt
 chmod 0700 /root/flags

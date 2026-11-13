@@ -169,3 +169,4 @@ This document serves as the master record and verification evidence for all test
 | **NFR-08** | Student isolation | Students cannot access the verifier's administrative interface or another team's data. | **PASSED** | Separate internal networking and dedicated port isolation. |
 | **NFR-09** | Security boundary | Exploitation cannot escape the container and affect the Docker host. | **PASSED** | Container runs with unprivileged isolation; no Docker daemon access or privileged host capabilities. |
 | **NFR-10** | Documentation | Deployment, reset, troubleshooting and instructor guides supplied. | **PASSED** | Complete documentation suite in `docs/` (`DEPLOYMENT.md`, `STUDENT_BRIEF.md`, `INSTRUCTOR_GUIDE.md`, `CREDENTIALS.md`, `TEST_REPORT.md`). |
+

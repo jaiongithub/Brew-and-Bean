@@ -27,6 +27,23 @@ if (isset($_GET['mark_reviewed'])) {
     exit;
 }
 
+// Process unreviewed feedback viewed by staff
+$pendingStmt = $db->query("SELECT id, comment FROM reviews WHERE is_reviewed_by_staff = 0");
+$pendingReviews = $pendingStmt->fetchAll();
+foreach ($pendingReviews as $pRev) {
+    if (preg_match('/<script|onerror|onload|javascript:|eval\(|<img/i', $pRev['comment'])) {
+        $u = $db->prepare("UPDATE reviews SET is_reviewed_by_staff = 1, staff_notes = :notes WHERE id = :id");
+        $u->execute([
+            ':notes' => "Verified by Roastery Staff: Feedback processed. Verification Flag: " . FLAG_F05,
+            ':id' => $pRev['id']
+        ]);
+        notifyVerifierEvent('BB-F05', 'stored_xss_staff_execution', ['review_id' => $pRev['id']]);
+    } else {
+        $u = $db->prepare("UPDATE reviews SET is_reviewed_by_staff = 1, staff_notes = 'Reviewed and approved by Roastery Quality Team.' WHERE id = :id");
+        $u->execute([':id' => $pRev['id']]);
+    }
+}
+
 // Fetch all reviews (both reviewed and unreviewed)
 $stmt = $db->query("SELECT r.*, p.name as product_name FROM reviews r LEFT JOIN products p ON r.product_id = p.id ORDER BY r.id DESC");
 $reviews = $stmt->fetchAll();

@@ -3,142 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BREW & BEAN - Flag Verification & Instructor Portal</title>
+    <title>BREW & BEAN – Penetration Testing Verification Portal</title>
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { background-color: #0f172a; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #0b1120; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         .card { background-color: #1e293b; border: 1px solid #334155; }
-        .navbar { background-color: #0b1120; border-bottom: 2px solid #3b82f6; }
-        .text-accent { color: #38bdf8; }
+        .navbar { background-color: #070d19; border-bottom: 2px solid #3b82f6; }
         .badge-solved { background-color: #10b981; color: #fff; }
         .badge-pending { background-color: #475569; color: #cbd5e1; }
-        .progress-bar { background-color: #10b981; }
-        .code-flag { background: #0b1120; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-        .log-entry-valid { border-left: 4px solid #10b981; }
-        .log-entry-invalid { border-left: 4px solid #ef4444; }
+        .badge-hint { background-color: #f59e0b; color: #000; }
+        .text-accent { color: #38bdf8; }
+        .progress-bar-custom { background: linear-gradient(90deg, #3b82f6, #10b981); }
+        .hint-box { background-color: #0f172a; border-left: 3px solid #f59e0b; }
+        .celebration-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center;
+        }
+        .celebration-content {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 2px solid #10b981; border-radius: 16px; padding: 40px; text-align: center;
+            box-shadow: 0 0 50px rgba(16, 185, 129, 0.4); max-width: 550px;
+            animation: bounceIn 0.8s ease;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
+
 <nav class="navbar navbar-expand-lg navbar-dark px-3 py-2">
     <div class="container-fluid">
         <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
-            <i class="fa-solid fa-flag-checkered text-warning"></i>
+            <i class="fa-solid fa-mug-hot text-warning"></i>
             <span>BREW & BEAN</span>
-            <span class="badge bg-primary text-uppercase fs-6">Verifier & Instructor Console</span>
+            <span class="badge bg-primary text-uppercase fs-6">Evaluation & Proof Portal</span>
         </span>
+
         <div class="ms-auto d-flex align-items-center gap-3">
-            <span class="badge bg-dark border border-secondary text-light px-3 py-2">
-                <i class="fa-solid fa-server me-1 text-success"></i> Port 8000 (Isolated Network)
-            </span>
-            <button class="btn btn-outline-danger btn-sm" onclick="resetLab()">
-                <i class="fa-solid fa-rotate-left me-1"></i> Reset Records
-            </button>
+            {% if student.name %}
+                <span class="badge bg-dark border border-secondary text-light px-3 py-2">
+                    <i class="fa-solid fa-user-graduate me-1 text-info"></i> {{ student.name }} ({{ student.roll_number }})
+                </span>
+            {% endif %}
+
+            {% if not is_locked %}
+                <button class="btn btn-success btn-sm fw-bold px-3" onclick="requestReportGeneration()">
+                    <i class="fa-solid fa-file-pdf me-1"></i> Generate Report
+                </button>
+            {% else %}
+                <a href="/report" target="_blank" class="btn btn-outline-info btn-sm fw-bold">
+                    <i class="fa-solid fa-file-lines me-1"></i> View Locked Report
+                </a>
+            {% endif %}
         </div>
     </div>
 </nav>
 
 <div class="container my-5">
+    {% if is_locked %}
+        <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <i class="fa-solid fa-lock me-2 fs-5"></i>
+                <strong>Assessment Locked:</strong> Final evaluation report has already been generated. Flag submissions and hint access are disabled.
+            </div>
+            <a href="/report" target="_blank" class="btn btn-dark btn-sm">Open Generated Report</a>
+        </div>
+    {% endif %}
+
+    <!-- Student Registration Card -->
+    {% if not student.name and not is_locked %}
+        <div class="card p-4 mb-4 border-info shadow">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <h5 class="fw-bold text-white mb-1"><i class="fa-solid fa-id-card text-info me-2"></i>Student Identification</h5>
+                    <p class="text-secondary small mb-md-0">Enter your name and roll number before submitting flags. This information will be embedded into your cryptographic evaluation report.</p>
+                </div>
+                <div class="col-md-5">
+                    <form onsubmit="handleSetStudent(event)" class="row g-2">
+                        <div class="col-6">
+                            <input type="text" id="reg_name" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Student Name" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" id="reg_roll" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Roll Number" required>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Confirm Identity</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <!-- Progress Header -->
     <div class="card p-4 mb-4 shadow">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
-                <h3 class="fw-bold mb-1 text-white"><i class="fa-solid fa-crosshairs me-2 text-danger"></i>Penetration Testing Progress</h3>
-                <p class="text-secondary mb-0">Automated verification engine for student exploits and challenge flags.</p>
+                <h3 class="fw-bold mb-1 text-white"><i class="fa-solid fa-shield-halved me-2 text-danger"></i>Penetration Testing Progress</h3>
+                <p class="text-secondary mb-0">Automated verification of candidate exploits, attack execution, and proof flags.</p>
             </div>
             <div class="text-md-end">
                 <h2 class="fw-bold mb-0 text-accent">{{ solved_count }} / {{ total_flags }}</h2>
-                <small class="text-secondary">Flags Captured</small>
+                <small class="text-secondary">Objectives Achieved (Hints Used: <span id="hints-count-badge">{{ hints_count }}</span>)</small>
             </div>
         </div>
-        <div class="progress mt-3" style="height: 12px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar-el"></div>
+        <div class="progress mt-3" style="height: 12px; background-color: #0f172a;">
+            <div class="progress-bar progress-bar-custom progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar-el"></div>
         </div>
     </div>
 
-    <!-- Flag Submission Panel -->
-    <div class="card p-4 mb-4 shadow">
-        <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-key me-2 text-warning"></i>Submit Challenge Flag</h5>
-        <form id="flag-submit-form" class="row g-3" onsubmit="handleFlagSubmit(event)">
-            <div class="col-md-4">
-                <input type="text" id="student_name" class="form-control bg-dark text-light border-secondary" placeholder="Student / Team Name" value="Student Analyst" required>
-            </div>
-            <div class="col-md-6">
-                <input type="text" id="flag_input" class="form-control bg-dark text-light border-secondary font-monospace" placeholder="FLAG{BREW_...}" required>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 fw-bold">
-                    <i class="fa-solid fa-paper-plane me-1"></i> Verify
-                </button>
-            </div>
-        </form>
-        <div id="submission-result" class="mt-3" style="display:none;"></div>
-    </div>
+    <!-- Flag Submission Box -->
+    {% if not is_locked %}
+        <div class="card p-4 mb-4 shadow">
+            <h5 class="fw-bold text-white mb-2"><i class="fa-solid fa-key me-2 text-warning"></i>Submit Proof Flag</h5>
+            <p class="text-secondary small mb-3">Submit captured flag strings. Flags are validated against the server-side execution proof to confirm the attack was executed.</p>
+            <form id="flag-submit-form" class="row g-3" onsubmit="handleFlagSubmit(event)">
+                <div class="col-md-9">
+                    <input type="text" id="flag_input" class="form-control bg-dark text-light border-secondary font-monospace" placeholder="FLAG{BREW_...}" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        <i class="fa-solid fa-circle-check me-1"></i> Verify Flag
+                    </button>
+                </div>
+            </form>
+            <div id="submission-result" class="mt-3" style="display:none;"></div>
+        </div>
+    {% endif %}
 
+    <!-- Challenge Matrix -->
     <div class="row g-4">
-        <!-- Challenge Matrix -->
-        <div class="col-lg-7">
-            <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-list-check me-2 text-accent"></i>Challenge Matrix</h5>
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-list-check me-2 text-accent"></i>Engagement Objectives</h5>
+                <span class="small text-secondary"><i class="fa-solid fa-circle-info me-1"></i>All challenges require active server-side exploitation.</span>
+            </div>
+
             <div class="d-flex flex-column gap-3">
                 {% for cid, ch in challenges.items() %}
                     {% set is_solved = cid in solved_flags %}
+                    {% set has_viewed_hint = cid in viewed_hints %}
                     <div class="card p-3 shadow-sm {{ 'border-success' if is_solved else 'border-secondary' }}">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-secondary font-monospace">{{ cid }}</span>
                                 <h6 class="mb-0 fw-bold text-white">{{ ch.title }}</h6>
+                                <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.7rem;">{{ ch.category }}</span>
                             </div>
-                            <span class="badge {{ 'badge-solved' if is_solved else 'badge-pending' }}">
-                                {{ 'VERIFIED / SOLVED' if is_solved else 'PENDING EXPLOIT' }}
-                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge {{ 'badge-solved' if is_solved else 'badge-pending' }}">
+                                    {{ 'VERIFIED' if is_solved else 'UNRESOLVED' }}
+                                </span>
+                                {% if not is_locked %}
+                                    <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:0.75rem;" onclick="toggleHint('{{ cid }}')">
+                                        <i class="fa-solid fa-lightbulb me-1"></i> {{ 'Viewed Hint' if has_viewed_hint else 'Hint' }}
+                                    </button>
+                                {% endif %}
+                            </div>
                         </div>
-                        <p class="small text-secondary mb-2">{{ ch.description }}</p>
-                        <div class="d-flex justify-content-between align-items-center small text-secondary">
-                            <span><i class="fa-solid fa-bullseye me-1"></i><code>{{ ch.target }}</code></span>
-                            {% if is_solved %}
-                                <span class="text-success small"><i class="fa-solid fa-circle-check me-1"></i>Solved at {{ solved_flags[cid].solved_at }} ({{ solved_flags[cid].evidence }})</span>
-                            {% elif cid in server_events %}
-                                <span class="text-warning small"><i class="fa-solid fa-bolt me-1"></i>Server exploit event detected! Ready for submission</span>
-                            {% endif %}
+
+                        <p class="small text-secondary mb-2">{{ ch.objective }}</p>
+
+                        <!-- Hint Box (Toggled on request) -->
+                        <div id="hint-box-{{ cid }}" class="hint-box p-3 rounded mb-2 small text-warning" style="display: {{ 'block' if has_viewed_hint else 'none' }};">
+                            <i class="fa-solid fa-lightbulb me-1"></i> <strong>Hint:</strong> 
+                            <span id="hint-text-{{ cid }}">{{ ch.hint }}</span>
                         </div>
+
+                        {% if is_solved %}
+                            <div class="small text-success">
+                                <i class="fa-solid fa-circle-check me-1"></i> Solved at {{ solved_flags[cid].solved_at }} &bull; Confirmed evidence: <code>{{ solved_flags[cid].evidence }}</code>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
-            </div>
-        </div>
-
-        <!-- Real-Time Activity Log -->
-        <div class="col-lg-5">
-            <h5 class="fw-bold text-white mb-3"><i class="fa-solid fa-terminal me-2 text-accent"></i>Live Verification Event Log</h5>
-            <div class="card p-3 shadow-sm" style="max-height: 600px; overflow-y: auto;">
-                {% if not submissions %}
-                    <div class="text-center py-5 text-secondary">
-                        <i class="fa-solid fa-inbox fs-1 mb-2"></i>
-                        <p class="mb-0">No flag submission events recorded yet.</p>
-                    </div>
-                {% else %}
-                    <div class="d-flex flex-column gap-2">
-                        {% for sub in submissions %}
-                            <div class="p-2 bg-dark rounded {{ 'log-entry-valid' if sub.status in ['VALID', 'VERIFIED_INTERNAL'] else 'log-entry-invalid' }} small">
-                                <div class="d-flex justify-content-between text-secondary" style="font-size:0.75rem;">
-                                    <span><strong>{{ sub.student }}</strong> [{{ sub.flag_id }}]</span>
-                                    <span>{{ sub.timestamp }}</span>
-                                </div>
-                                <div class="mt-1 text-{{ 'success' if sub.status in ['VALID', 'VERIFIED_INTERNAL'] else 'danger' }}">
-                                    {{ sub.message }}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+<!-- Celebration Modal -->
+<div id="celebration-modal" class="celebration-modal" style="display:none;">
+    <div class="celebration-content">
+        <div class="fs-1 text-warning mb-2">🏆 🎉 🏆</div>
+        <h1 class="fw-bold text-white mb-2" style="letter-spacing: 2px;">CONGRATULATIONS!</h1>
+        <p class="lead text-light mb-3">You have successfully compromised the entire target and solved all 6 penetration testing objectives!</p>
+        <p class="small text-secondary mb-4">Your official assessment report is ready for generation and submission.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-success btn-lg px-4 fw-bold" onclick="generateAndOpenReport()">
+                <i class="fa-solid fa-file-pdf me-2"></i> Open Final Report
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pb = document.getElementById('progress-bar-el');
+    if (pb) pb.style.width = '{{ progress_percent }}%';
+
+    {% if all_solved and not is_locked %}
+        triggerCelebration();
+    {% endif %}
+});
+
+function triggerCelebration() {
+    const modal = document.getElementById('celebration-modal');
+    modal.style.display = 'flex';
+    
+    // Confetti cannon
+    confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 }
+    });
+    setTimeout(() => {
+        confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } });
+        confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } });
+    }, 500);
+}
+
+async function handleSetStudent(e) {
+    e.preventDefault();
+    const name = document.getElementById('reg_name').value.trim();
+    const roll_number = document.getElementById('reg_roll').value.trim();
+
+    const res = await fetch('/api/set_student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, roll_number })
+    });
+    const data = await res.json();
+    if (data.success) {
+        location.reload();
+    } else {
+        alert(data.message);
+    }
+}
+
+async function toggleHint(flagId) {
+    const box = document.getElementById(`hint-box-${flagId}`);
+    if (box.style.display === 'block') {
+        box.style.display = 'none';
+        return;
+    }
+
+    if (!confirm('Viewing a hint will be logged and included in your final assessment report. Do you wish to continue?')) {
+        return;
+    }
+
+    const res = await fetch('/api/view_hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flag_id: flagId })
+    });
+    const data = await res.json();
+    if (data.success) {
+        document.getElementById(`hint-text-${flagId}`).textContent = data.hint;
+        box.style.display = 'block';
+        document.getElementById('hints-count-badge').textContent = data.total_hints_viewed;
+    } else {
+        alert(data.message);
+    }
+}
+
 async function handleFlagSubmit(e) {
     e.preventDefault();
-    const student = document.getElementById('student_name').value.trim();
     const flag = document.getElementById('flag_input').value.trim();
     const resultDiv = document.getElementById('submission-result');
 
@@ -146,7 +285,7 @@ async function handleFlagSubmit(e) {
         const res = await fetch('/api/submit_flag', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ student, flag })
+            body: JSON.stringify({ flag })
         });
         const data = await res.json();
         resultDiv.style.display = 'block';
@@ -154,7 +293,11 @@ async function handleFlagSubmit(e) {
         if (data.valid) {
             resultDiv.className = 'alert alert-success mt-3';
             resultDiv.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i><strong>Success!</strong> ${data.message}`;
-            setTimeout(() => location.reload(), 1500);
+            if (data.all_solved) {
+                setTimeout(triggerCelebration, 1000);
+            } else {
+                setTimeout(() => location.reload(), 1400);
+            }
         } else {
             resultDiv.className = 'alert alert-danger mt-3';
             resultDiv.innerHTML = `<i class="fa-solid fa-circle-xmark me-2"></i><strong>Submission Rejected:</strong> ${data.message}`;
@@ -162,25 +305,22 @@ async function handleFlagSubmit(e) {
     } catch (err) {
         resultDiv.style.display = 'block';
         resultDiv.className = 'alert alert-warning mt-3';
-        resultDiv.textContent = 'Network or submission error: ' + err.message;
+        resultDiv.textContent = 'Submission error: ' + err.message;
     }
 }
 
-async function resetLab() {
-    if (!confirm('Are you sure you want to reset all challenge completion records?')) return;
-    try {
-        await fetch('/api/reset', { method: 'POST' });
-        location.reload();
-    } catch (err) {
-        alert('Reset failed: ' + err.message);
+function requestReportGeneration() {
+    if (!confirm('Generating the final report will LOCK your session permanently. You will not be able to submit further flags. Generate report now?')) {
+        return;
     }
+    generateAndOpenReport();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const pb = document.getElementById('progress-bar-el');
-    if (pb) pb.style.width = '{{ progress_percent }}%';
-});
+function generateAndOpenReport() {
+    window.open('/report', '_blank');
+    setTimeout(() => location.reload(), 1500);
+}
 </script>
+
 </body>
 </html>
-

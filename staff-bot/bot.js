@@ -5,7 +5,7 @@ const VERIFIER_URL = process.env.VERIFIER_INTERNAL_URL || 'http://brew-verifier:
 const STAFF_USER = process.env.STAFF_USER || 'staff_sarah';
 const STAFF_PASS = process.env.STAFF_PASS || 'S@r@hSt@ff2026!';
 const FLAG_F05 = process.env.FLAG_F05 || 'FLAG{BREW_STORED_XSS_05}';
-const CHECK_INTERVAL = parseInt(process.env.STAFF_BOT_INTERVAL || '20', 10) * 1000;
+const CHECK_INTERVAL = parseInt(process.env.STAFF_BOT_INTERVAL || '10', 10) * 1000;
 
 async function notifyVerifier(triggerReason) {
     try {
