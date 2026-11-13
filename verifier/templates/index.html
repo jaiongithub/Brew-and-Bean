@@ -11,56 +11,103 @@
     <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        body { background-color: #0b1120; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body {
+            background-color: #0b1120;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        @media (min-width: 992px) and (min-height: 650px) {
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+            .dashboard-viewport {
+                height: calc(100vh - 58px);
+                overflow: hidden;
+            }
+            .challenge-scroll-pane {
+                height: calc(100vh - 120px);
+                overflow-y: auto;
+                padding-right: 6px;
+            }
+        }
         .card { background-color: #1e293b; border: 1px solid #334155; }
         .navbar { background-color: #070d19; border-bottom: 2px solid #3b82f6; }
         .badge-solved { background-color: #10b981; color: #fff; }
-        .badge-pending { background-color: #475569; color: #cbd5e1; }
-        .badge-hint { background-color: #f59e0b; color: #000; }
+        .badge-pending { background-color: #334155; color: #94a3b8; }
         .text-accent { color: #38bdf8; }
         .progress-bar-custom { background: linear-gradient(90deg, #3b82f6, #10b981); }
         .hint-box { background-color: #0f172a; border-left: 3px solid #f59e0b; }
-        .celebration-modal {
+        
+        /* Custom sleek scrollbar */
+        .challenge-scroll-pane::-webkit-scrollbar { width: 6px; }
+        .challenge-scroll-pane::-webkit-scrollbar-track { background: #0b1120; }
+        .challenge-scroll-pane::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .challenge-scroll-pane::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Modal Backdrops */
+        .custom-modal-backdrop {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center;
         }
-        .celebration-content {
+        .custom-modal-box {
             background: linear-gradient(135deg, #1e293b, #0f172a);
-            border: 2px solid #10b981; border-radius: 16px; padding: 40px; text-align: center;
-            box-shadow: 0 0 50px rgba(16, 185, 129, 0.4); max-width: 550px;
-            animation: bounceIn 0.8s ease;
+            border-radius: 14px; padding: 30px; text-align: center;
+            max-width: 520px; width: 90%; animation: popIn 0.3s ease;
         }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
 <body data-all-solved="{{ 'true' if all_solved else 'false' }}" data-is-locked="{{ 'true' if is_locked else 'false' }}" data-progress="{{ progress_percent }}">
 
+<!-- Header Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark px-3 py-2">
     <div class="container-fluid">
-        <span class="navbar-brand fw-bold d-flex align-items-center gap-2">
+        <span class="navbar-brand fw-bold d-flex align-items-center gap-2 mb-0 py-0">
             <i class="fa-solid fa-mug-hot text-warning"></i>
             <span>BREW & BEAN</span>
-            <span class="badge bg-primary text-uppercase fs-6">Evaluation & Proof Portal</span>
+            <span class="badge bg-primary text-uppercase" style="font-size: 0.72rem;">Proof Portal</span>
         </span>
 
-        <div class="ms-auto d-flex align-items-center gap-3">
+        <!-- Middle Quick Stats -->
+        <div class="d-none d-md-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <small class="text-secondary">Progress:</small>
+                <div class="progress" style="width: 110px; height: 8px; background-color: #0f172a;">
+                    <div class="progress-bar progress-bar-custom" id="progress-bar-el" style="width: 0%;"></div>
+                </div>
+                <span class="fw-bold text-accent small"><span id="solved-count-badge">{{ solved_count }}</span>/{{ total_flags }}</span>
+            </div>
+            <div class="badge bg-dark border border-secondary text-secondary small py-1 px-2">
+                <i class="fa-solid fa-lightbulb text-warning me-1"></i>Hints: <span id="hints-count-badge">{{ hints_count }}</span>
+            </div>
+        </div>
+
+        <!-- Right Action Controls -->
+        <div class="ms-auto d-flex align-items-center gap-2">
             {% if student.name %}
-                <span class="badge bg-dark border border-secondary text-light px-3 py-2">
+                <span class="badge bg-dark border border-secondary text-light px-2 py-1 small d-none d-lg-inline-block">
                     <i class="fa-solid fa-user-graduate me-1 text-info"></i> {{ student.name }} ({{ student.roll_number }})
                 </span>
             {% endif %}
 
+            <!-- Reset Lab Button -->
+            <button class="btn btn-outline-danger btn-sm fw-bold px-2 py-1" onclick="openResetModal()" title="Reset lab container & database to pristine initial state">
+                <i class="fa-solid fa-arrows-rotate me-1"></i> Reset Lab
+            </button>
+
+            <!-- Report Button -->
             {% if not is_locked %}
-                <button class="btn btn-success btn-sm fw-bold px-3" onclick="requestReportGeneration()">
+                <button class="btn btn-success btn-sm fw-bold px-3 py-1" onclick="requestReportGeneration()">
                     <i class="fa-solid fa-file-pdf me-1"></i> Generate Report
                 </button>
             {% else %}
-                <a href="/report" target="_blank" class="btn btn-outline-info btn-sm fw-bold">
+                <a href="/report" target="_blank" class="btn btn-outline-info btn-sm fw-bold px-3 py-1">
                     <i class="fa-solid fa-file-lines me-1"></i> View Locked Report
                 </a>
             {% endif %}
@@ -68,138 +115,201 @@
     </div>
 </nav>
 
-<div class="container my-5">
-    {% if is_locked %}
-        <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <i class="fa-solid fa-lock me-2 fs-5"></i>
-                <strong>Assessment Locked:</strong> Final evaluation report has already been generated. Flag submissions and hint access are disabled.
-            </div>
-            <a href="/report" target="_blank" class="btn btn-dark btn-sm">Open Generated Report</a>
-        </div>
-    {% endif %}
-
-    <!-- Student Registration Card -->
-    {% if not student.name and not is_locked %}
-        <div class="card p-4 mb-4 border-info shadow">
-            <div class="row align-items-center">
-                <div class="col-md-7">
-                    <h5 class="fw-bold text-white mb-1"><i class="fa-solid fa-id-card text-info me-2"></i>Student Identification</h5>
-                    <p class="text-secondary small mb-md-0">Enter your name and roll number before submitting flags. This information will be embedded into your cryptographic evaluation report.</p>
-                </div>
-                <div class="col-md-5">
-                    <form onsubmit="handleSetStudent(event)" class="row g-2">
-                        <div class="col-6">
-                            <input type="text" id="reg_name" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Student Name" required>
+<!-- Single-Page Main Dashboard Layout -->
+<div class="container-fluid px-3 py-2 dashboard-viewport">
+    <div class="row g-3 h-100">
+        
+        <!-- LEFT COLUMN: Identity + Flag Submission + Telemetry Status -->
+        <div class="col-lg-4 col-xl-4 d-flex flex-column gap-2">
+            
+            <!-- Student Registration Card -->
+            {% if not student.name and not is_locked %}
+                <div class="card p-3 shadow-sm border-info">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold text-white mb-0"><i class="fa-solid fa-id-card text-info me-2"></i>Student Identification</h6>
+                        <span class="badge bg-info text-dark" style="font-size:0.65rem;">REQUIRED</span>
+                    </div>
+                    <form onsubmit="handleSetStudent(event)">
+                        <div class="mb-2">
+                            <label for="reg_name" class="form-label small fw-bold text-light mb-1">Student Name</label>
+                            <input type="text" id="reg_name" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Enter full name" required>
                         </div>
-                        <div class="col-6">
-                            <input type="text" id="reg_roll" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Roll Number" required>
+                        <div class="mb-2">
+                            <label for="reg_roll" class="form-label small fw-bold text-light mb-1">Roll Number</label>
+                            <input type="text" id="reg_roll" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Enter student roll number" required>
                         </div>
-                        <div class="col-12 text-end">
-                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">Confirm Identity</button>
-                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-1">
+                            <i class="fa-solid fa-check me-1"></i> Confirm Student Identity
+                        </button>
                     </form>
                 </div>
-            </div>
-        </div>
-    {% endif %}
-
-    <!-- Progress Header -->
-    <div class="card p-4 mb-4 shadow">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div>
-                <h3 class="fw-bold mb-1 text-white"><i class="fa-solid fa-shield-halved me-2 text-danger"></i>Penetration Testing Progress</h3>
-                <p class="text-secondary mb-0">Automated verification of candidate exploits, attack execution, and proof flags.</p>
-            </div>
-            <div class="text-md-end">
-                <h2 class="fw-bold mb-0 text-accent">{{ solved_count }} / {{ total_flags }}</h2>
-                <small class="text-secondary">Objectives Achieved (Hints Used: <span id="hints-count-badge">{{ hints_count }}</span>)</small>
-            </div>
-        </div>
-        <div class="progress mt-3" style="height: 12px; background-color: #0f172a;">
-            <div class="progress-bar progress-bar-custom progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar-el"></div>
-        </div>
-    </div>
-
-    <!-- Flag Submission Box -->
-    {% if not is_locked %}
-        <div class="card p-4 mb-4 shadow">
-            <h5 class="fw-bold text-white mb-2"><i class="fa-solid fa-key me-2 text-warning"></i>Submit Proof Flag</h5>
-            <p class="text-secondary small mb-3">Submit captured flag strings. Flags are validated against the server-side execution proof to confirm the attack was executed.</p>
-            <form id="flag-submit-form" class="row g-3" onsubmit="handleFlagSubmit(event)">
-                <div class="col-md-9">
-                    <input type="text" id="flag_input" class="form-control bg-dark text-light border-secondary font-monospace" placeholder="FLAG{BREW_...}" required>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">
-                        <i class="fa-solid fa-circle-check me-1"></i> Verify Flag
-                    </button>
-                </div>
-            </form>
-            <div id="submission-result" class="mt-3" style="display:none;"></div>
-        </div>
-    {% endif %}
-
-    <!-- Challenge Matrix -->
-    <div class="row g-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-white mb-0"><i class="fa-solid fa-list-check me-2 text-accent"></i>Engagement Objectives</h5>
-                <span class="small text-secondary"><i class="fa-solid fa-circle-info me-1"></i>All challenges require active server-side exploitation.</span>
-            </div>
-
-            <div class="d-flex flex-column gap-3">
-                {% for cid, ch in challenges.items() %}
-                    {% set is_solved = cid in solved_flags %}
-                    {% set has_viewed_hint = cid in viewed_hints %}
-                    <div class="card p-3 shadow-sm {{ 'border-success' if is_solved else 'border-secondary' }}">
-                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-secondary font-monospace">{{ cid }}</span>
-                                <h6 class="mb-0 fw-bold text-white">{{ ch.title }}</h6>
-                                <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.7rem;">{{ ch.category }}</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge {{ 'badge-solved' if is_solved else 'badge-pending' }}">
-                                    {{ 'VERIFIED' if is_solved else 'UNRESOLVED' }}
-                                </span>
-                                {% if not is_locked %}
-                                    <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:0.75rem;" onclick="toggleHint('{{ cid }}')">
-                                        <i class="fa-solid fa-lightbulb me-1"></i> {{ 'Viewed Hint' if has_viewed_hint else 'Hint' }}
-                                    </button>
-                                {% endif %}
-                            </div>
+            {% else %}
+                <div class="card p-2 shadow-sm border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-secondary text-uppercase fw-bold d-block" style="font-size: 0.68rem;">Candidate Identified</small>
+                            <div class="fw-bold text-info small mb-0">{{ student.name if student.name else 'Student Candidate' }}</div>
+                            <small class="text-secondary font-monospace">{{ student.roll_number if student.roll_number else 'UNASSIGNED' }}</small>
                         </div>
-
-                        <p class="small text-secondary mb-2">{{ ch.objective }}</p>
-
-                        <!-- Hint Box (Toggled on request) -->
-                        <div id="hint-box-{{ cid }}" class="hint-box p-3 rounded mb-2 small text-warning {% if not has_viewed_hint %}d-none{% endif %}">
-                            <i class="fa-solid fa-lightbulb me-1"></i> <strong>Hint:</strong> 
-                            <span id="hint-text-{{ cid }}">{{ ch.hint }}</span>
-                        </div>
-
-                        {% if is_solved %}
-                            <div class="small text-success">
-                                <i class="fa-solid fa-circle-check me-1"></i> Solved at {{ solved_flags[cid].solved_at }} &bull; Confirmed evidence: <code>{{ solved_flags[cid].evidence }}</code>
-                            </div>
-                        {% endif %}
+                        <span class="badge bg-success-subtle text-success border border-success small py-1 px-2">
+                            <i class="fa-solid fa-circle-check me-1"></i>Active Session
+                        </span>
                     </div>
-                {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Flag Submission Card -->
+            {% if not is_locked %}
+                <div class="card p-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="flag_input" class="form-label small fw-bold text-white mb-0">
+                            <i class="fa-solid fa-key text-warning me-1"></i> Submit Captured Flag
+                        </label>
+                        <small class="text-secondary" style="font-size:0.7rem;">Live Validation</small>
+                    </div>
+                    <form id="flag-submit-form" onsubmit="handleFlagSubmit(event)">
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="text" id="flag_input" class="form-control bg-dark text-light border-secondary font-monospace" placeholder="FLAG{BREW_...}" required>
+                            <button type="submit" class="btn btn-primary fw-bold px-3">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Verify
+                            </button>
+                        </div>
+                    </form>
+                    <div id="submission-result" class="small p-2 rounded" style="display:none;"></div>
+                </div>
+            {% else %}
+                <div class="card p-3 shadow-sm border-warning">
+                    <div class="d-flex align-items-center gap-2 text-warning mb-1">
+                        <i class="fa-solid fa-lock fs-5"></i>
+                        <h6 class="fw-bold mb-0">Session Assessment Locked</h6>
+                    </div>
+                    <p class="small text-secondary mb-0">Evaluation report was finalized. Use "Reset Lab" to start a new attempt.</p>
+                </div>
+            {% endif %}
+
+            <!-- System Telemetry & Rules Card -->
+            <div class="card p-3 shadow-sm mt-auto">
+                <h6 class="fw-bold text-white small mb-2"><i class="fa-solid fa-server text-accent me-2"></i>Lab Infrastructure & Rules</h6>
+                <ul class="list-unstyled small text-secondary mb-0" style="font-size: 0.78rem;">
+                    <li class="mb-1"><i class="fa-solid fa-check-double text-success me-1"></i> <strong>Exploit Proof:</strong> Flags are accepted only when server-side attack telemetry confirms execution.</li>
+                    <li class="mb-1"><i class="fa-solid fa-eye text-warning me-1"></i> <strong>Hint Audit:</strong> Every hint opened is recorded and tallied in your final report.</li>
+                    <li class="mb-1"><i class="fa-solid fa-shield-cat text-info me-1"></i> <strong>Fresh State:</strong> Reset Lab cleans all student comments, temporary files, and resets database.</li>
+                    <li><i class="fa-solid fa-lock text-danger me-1"></i> <strong>Anti-Tamper:</strong> Reports include an unalterable SHA-256 integrity signature.</li>
+                </ul>
             </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Engagement Objectives (6 Targets in 2x3 Grid) -->
+        <div class="col-lg-8 col-xl-8">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-white mb-0">
+                    <i class="fa-solid fa-list-check me-2 text-accent"></i>Engagement Objectives (6 Target Proofs)
+                </h6>
+                <small class="text-secondary" style="font-size: 0.75rem;">
+                    <i class="fa-solid fa-circle-info me-1"></i>Click "Hint" on any target to view objective guidance.
+                </small>
+            </div>
+
+            <!-- Scrollable container for cards -->
+            <div class="challenge-scroll-pane">
+                <div class="row g-2">
+                    {% for cid, ch in challenges.items() %}
+                        {% set is_solved = cid in solved_flags %}
+                        {% set has_viewed_hint = cid in viewed_hints %}
+                        <div class="col-md-6">
+                            <div class="card p-2 shadow-sm h-100 {{ 'border-success' if is_solved else 'border-secondary' }}">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="badge bg-secondary font-monospace" style="font-size:0.68rem;">{{ cid }}</span>
+                                        <span class="badge bg-dark border border-secondary text-secondary" style="font-size:0.65rem;">{{ ch.category }}</span>
+                                    </div>
+                                    <span class="badge {{ 'badge-solved' if is_solved else 'badge-pending' }}" style="font-size: 0.68rem;">
+                                        {{ 'VERIFIED' if is_solved else 'UNRESOLVED' }}
+                                    </span>
+                                </div>
+
+                                <h6 class="fw-bold text-white mb-1" style="font-size: 0.85rem;">{{ ch.title }}</h6>
+                                <p class="text-secondary mb-2" style="font-size: 0.75rem; min-height: 32px;">{{ ch.objective }}</p>
+
+                                <!-- Hint Box (Toggled on request) -->
+                                <div id="hint-box-{{ cid }}" class="hint-box p-2 rounded mb-2 small text-warning {% if not has_viewed_hint %}d-none{% endif %}" style="font-size: 0.74rem;">
+                                    <i class="fa-solid fa-lightbulb me-1"></i><strong>Hint:</strong> 
+                                    <span id="hint-text-{{ cid }}">{{ ch.hint }}</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top border-secondary-subtle">
+                                    {% if is_solved %}
+                                        <span class="text-success small" style="font-size:0.7rem;">
+                                            <i class="fa-solid fa-circle-check me-1"></i>Solved ({{ solved_flags[cid].solved_at.split(' ')[1] }})
+                                        </span>
+                                    {% else %}
+                                        <span class="text-secondary small" style="font-size:0.7rem;">
+                                            <i class="fa-solid fa-hourglass-half me-1"></i>Pending attack
+                                        </span>
+                                    {% endif %}
+
+                                    {% if not is_locked %}
+                                        <button class="btn btn-outline-warning btn-sm py-0 px-2" style="font-size:0.7rem;" onclick="toggleHint('{{ cid }}')">
+                                            <i class="fa-solid fa-lightbulb me-1"></i>{{ 'Viewed Hint' if has_viewed_hint else 'Hint' }}
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Reset Confirmation Modal -->
+<div id="reset-confirm-modal" class="custom-modal-backdrop">
+    <div class="custom-modal-box border border-danger">
+        <div class="fs-1 text-danger mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <h4 class="fw-bold text-white mb-2">Reset Lab to Fresh State?</h4>
+        <p class="small text-secondary mb-3">
+            This will restore the target MariaDB database, delete student comments & stored XSS payloads, clean up temporary exploit files, and reset all verification records and candidate progress.
+        </p>
+        <div class="alert alert-warning py-2 small mb-3">
+            <i class="fa-solid fa-circle-info me-1"></i>All submitted flags and identity records will be cleared.
+        </div>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="btn btn-outline-secondary btn-sm px-3" onclick="closeResetModal()">Cancel</button>
+            <button class="btn btn-danger btn-sm px-4 fw-bold" onclick="executeResetLab()">
+                <i class="fa-solid fa-trash-can me-1"></i> Yes, Reset Lab
+            </button>
         </div>
     </div>
 </div>
 
+<!-- Report Generated & Auto-Reset Notification Modal -->
+<div id="report-reset-modal" class="custom-modal-backdrop">
+    <div class="custom-modal-box border border-success">
+        <div class="fs-1 text-success mb-2"><i class="fa-solid fa-circle-check"></i></div>
+        <h4 class="fw-bold text-white mb-2">Report Opened & Lab Reset</h4>
+        <p class="text-light small mb-3">
+            Your official evaluation report has been generated and opened in a new tab for PDF saving/printing.
+        </p>
+        <p class="small text-secondary mb-4">
+            The target application, MariaDB comments, and lab container have been automatically reset to their fresh initial state.
+        </p>
+        <button class="btn btn-primary px-4 fw-bold" onclick="acknowledgeReportAndRefresh()">
+            <i class="fa-solid fa-rotate-right me-1"></i> Acknowledge & Start Fresh
+        </button>
+    </div>
+</div>
+
 <!-- Celebration Modal -->
-<div id="celebration-modal" class="celebration-modal" style="display:none;">
-    <div class="celebration-content">
+<div id="celebration-modal" class="custom-modal-backdrop">
+    <div class="custom-modal-box border border-warning" style="box-shadow: 0 0 50px rgba(16, 185, 129, 0.4);">
         <div class="fs-1 text-warning mb-2">🏆 🎉 🏆</div>
-        <h1 class="fw-bold text-white mb-2" style="letter-spacing: 2px;">CONGRATULATIONS!</h1>
-        <p class="lead text-light mb-3">You have successfully compromised the entire target and solved all 6 penetration testing objectives!</p>
-        <p class="small text-secondary mb-4">Your official assessment report is ready for generation and submission.</p>
+        <h2 class="fw-bold text-white mb-2" style="letter-spacing: 2px;">CONGRATULATIONS!</h2>
+        <p class="lead text-light mb-3 fs-6">You have compromised the target environment and solved all 6 penetration testing objectives!</p>
+        <p class="small text-secondary mb-4">Your official report is prepared. Generating it will open the tamper-proof assessment report and reset the lab environment.</p>
         <div class="d-flex justify-content-center gap-3">
-            <button class="btn btn-success btn-lg px-4 fw-bold" onclick="generateAndOpenReport()">
+            <button class="btn btn-success btn-lg px-4 fw-bold fs-6" onclick="requestReportGeneration()">
                 <i class="fa-solid fa-file-pdf me-2"></i> Open Final Report
             </button>
         </div>
@@ -223,7 +333,6 @@ function triggerCelebration() {
     const modal = document.getElementById('celebration-modal');
     modal.style.display = 'flex';
     
-    // Confetti cannon
     confetti({
         particleCount: 150,
         spread: 80,
@@ -233,6 +342,30 @@ function triggerCelebration() {
         confetti({ particleCount: 100, angle: 60, spread: 55, origin: { x: 0 } });
         confetti({ particleCount: 100, angle: 120, spread: 55, origin: { x: 1 } });
     }, 500);
+}
+
+function openResetModal() {
+    document.getElementById('reset-confirm-modal').style.display = 'flex';
+}
+
+function closeResetModal() {
+    document.getElementById('reset-confirm-modal').style.display = 'none';
+}
+
+async function executeResetLab() {
+    closeResetModal();
+    try {
+        const res = await fetch('/api/reset_lab', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+            alert('Lab environment, database, and candidate progress successfully reset to fresh initial state.');
+            location.reload();
+        } else {
+            alert('Reset failed: ' + data.message);
+        }
+    } catch (err) {
+        alert('Reset request error: ' + err.message);
+    }
 }
 
 async function handleSetStudent(e) {
@@ -281,7 +414,8 @@ async function toggleHint(flagId) {
 
 async function handleFlagSubmit(e) {
     e.preventDefault();
-    const flag = document.getElementById('flag_input').value.trim();
+    const flagInput = document.getElementById('flag_input');
+    const flag = flagInput.value.trim();
     const resultDiv = document.getElementById('submission-result');
 
     try {
@@ -294,34 +428,39 @@ async function handleFlagSubmit(e) {
         resultDiv.style.display = 'block';
 
         if (data.valid) {
-            resultDiv.className = 'alert alert-success mt-3';
-            resultDiv.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i><strong>Success!</strong> ${data.message}`;
+            resultDiv.className = 'alert alert-success p-2 small mt-2 mb-0';
+            resultDiv.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i><strong>Verified!</strong> ${data.message}`;
+            flagInput.value = '';
             if (data.all_solved) {
-                setTimeout(triggerCelebration, 1000);
+                setTimeout(triggerCelebration, 800);
             } else {
-                setTimeout(() => location.reload(), 1400);
+                setTimeout(() => location.reload(), 1200);
             }
         } else {
-            resultDiv.className = 'alert alert-danger mt-3';
-            resultDiv.innerHTML = `<i class="fa-solid fa-circle-xmark me-2"></i><strong>Submission Rejected:</strong> ${data.message}`;
+            resultDiv.className = 'alert alert-danger p-2 small mt-2 mb-0';
+            resultDiv.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i><strong>Rejected:</strong> ${data.message}`;
         }
     } catch (err) {
         resultDiv.style.display = 'block';
-        resultDiv.className = 'alert alert-warning mt-3';
+        resultDiv.className = 'alert alert-warning p-2 small mt-2 mb-0';
         resultDiv.textContent = 'Submission error: ' + err.message;
     }
 }
 
 function requestReportGeneration() {
-    if (!confirm('Generating the final report will LOCK your session permanently. You will not be able to submit further flags. Generate report now?')) {
-        return;
-    }
-    generateAndOpenReport();
+    // Open report in new window/tab
+    window.open('/report', '_blank');
+
+    // Trigger target reset in the background
+    fetch('/api/reset_lab', { method: 'POST' });
+
+    // Display student notification modal explaining report was generated and lab was automatically reset
+    document.getElementById('report-reset-modal').style.display = 'flex';
 }
 
-function generateAndOpenReport() {
-    window.open('/report', '_blank');
-    setTimeout(() => location.reload(), 1500);
+function acknowledgeReportAndRefresh() {
+    document.getElementById('report-reset-modal').style.display = 'none';
+    location.reload();
 }
 </script>
 

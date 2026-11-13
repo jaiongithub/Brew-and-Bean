@@ -2,12 +2,15 @@ import os
 import json
 import hashlib
 import datetime
+import urllib.request
+import urllib.error
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "brew-bean-verifier-session-secret-2026")
 
 SECRET_SALT = "BREW_BEAN_ACADEMIC_INTEGRITY_SALT_2026"
+WEB_INTERNAL_URL = os.getenv("WEB_INTERNAL_URL", "http://brew-web")
 
 # Configured Challenge Flags (NO ENDPOINTS LEAKED TO STUDENTS)
 CHALLENGES = {
@@ -258,16 +261,37 @@ def generate_report():
         verification_hash=verification_hash
     )
 
+def call_web_reset():
+    try:
+        url = f"{WEB_INTERNAL_URL}/api/internal-reset.php"
+        req = urllib.request.Request(url, method="POST")
+        with urllib.request.urlopen(req, timeout=5) as response:
+            return response.status == 200
+    except Exception as e:
+        print(f"[-] Web reset error: {e}")
+        return False
+
+@app.route("/api/reset_lab", methods=["POST"])
 @app.route("/api/reset", methods=["POST"])
 def reset_progress():
     global solved_flags, submissions, server_events, viewed_hints, is_locked, student_info
+    
+    # 1. Reset target container and database
+    web_reset_ok = call_web_reset()
+
+    # 2. Reset verifier records
     solved_flags.clear()
     submissions.clear()
     server_events.clear()
     viewed_hints.clear()
     is_locked = False
     student_info = {"name": "", "roll_number": ""}
-    return jsonify({"success": True, "message": "Lab verification records successfully reset."})
+
+    return jsonify({
+        "success": True,
+        "web_reset": web_reset_ok,
+        "message": "Lab environment and verification records successfully reset to pristine initial state."
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

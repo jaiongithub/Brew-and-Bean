@@ -50,6 +50,10 @@ chmod -R 777 /var/www/html/tmp/cache
 echo "[+] Starting cron service..."
 cron
 
+# Ensure database and target state starts completely fresh
+echo "[+] Ensuring fresh initial environment state..."
+php /var/www/html/api/internal-reset.php 2>/dev/null || true
+
 # Wait for database if needed
 echo "[+] Database host: ${DB_HOST:-brew-db}"
 
