@@ -157,17 +157,30 @@ body {
 footer {
   margin-top: auto;
   background-color: var(--coffee-dark);
-  color: #a89f91;
+  color: #f5f0e6;
   padding: 2.5rem 0 1.5rem 0;
   border-top: 3px solid var(--coffee-tan);
 }
 
+footer p,
+footer li,
+footer span,
+footer .footer-text {
+  color: #ede3d4 !important;
+}
+
 footer a {
-  color: var(--coffee-tan);
+  color: #f7ca88 !important;
   text-decoration: none;
+  transition: all 0.2s ease;
 }
 
 footer a:hover {
-  color: #fff;
+  color: #ffffff !important;
+  text-decoration: underline;
+}
+
+footer hr {
+  border-color: rgba(199, 156, 110, 0.4) !important;
 }
 

@@ -193,8 +193,7 @@
                 <ul class="list-unstyled small text-secondary mb-0" style="font-size: 0.78rem;">
                     <li class="mb-1"><i class="fa-solid fa-check-double text-success me-1"></i> <strong>Exploit Proof:</strong> Flags are accepted only when server-side attack telemetry confirms execution.</li>
                     <li class="mb-1"><i class="fa-solid fa-eye text-warning me-1"></i> <strong>Hint Audit:</strong> Every hint opened is recorded and tallied in your final report.</li>
-                    <li class="mb-1"><i class="fa-solid fa-shield-cat text-info me-1"></i> <strong>Fresh State:</strong> Reset Lab cleans all student comments, temporary files, and resets database.</li>
-                    <li><i class="fa-solid fa-lock text-danger me-1"></i> <strong>Anti-Tamper:</strong> Reports include an unalterable SHA-256 integrity signature.</li>
+                    <li><i class="fa-solid fa-shield-cat text-info me-1"></i> <strong>Fresh State:</strong> Reset Lab cleans all student comments, temporary files, and resets database.</li>
                 </ul>
             </div>
         </div>
@@ -355,10 +354,17 @@ function closeResetModal() {
 async function executeResetLab() {
     closeResetModal();
     try {
+        // 1. Reset verifier records and target environment via verifier backend
         const res = await fetch('/api/reset_lab', { method: 'POST' });
         const data = await res.json();
+
+        // 2. Also trigger reset directly on web app port 80 from student browser
+        try {
+            await fetch('http://' + window.location.hostname + '/api/internal-reset.php', { method: 'POST' });
+        } catch (_) {}
+
         if (data.success) {
-            alert('Lab environment, database, and candidate progress successfully reset to fresh initial state.');
+            alert('Lab environment, web application database, and candidate progress successfully reset to fresh initial state.');
             location.reload();
         } else {
             alert('Reset failed: ' + data.message);
@@ -453,6 +459,9 @@ function requestReportGeneration() {
 
     // Trigger target reset in the background
     fetch('/api/reset_lab', { method: 'POST' });
+    try {
+        fetch('http://' + window.location.hostname + '/api/internal-reset.php', { method: 'POST' }).catch(() => {});
+    } catch (_) {}
 
     // Display student notification modal explaining report was generated and lab was automatically reset
     document.getElementById('report-reset-modal').style.display = 'flex';

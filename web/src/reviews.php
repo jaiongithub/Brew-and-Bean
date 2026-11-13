@@ -1,11 +1,8 @@
 <?php
-$pageTitle = "Customer Feedback & Reviews";
-require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/config/db.php';
 
 $db = getDb();
 $user = currentUser();
-$msg = null;
-$error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     $author = trim($_POST['author_name'] ?? '');
@@ -14,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     $productId = !empty($_POST['product_id']) ? (int)$_POST['product_id'] : 1;
 
     if (empty($author) || empty($comment)) {
-        $error = "Please provide both your name and feedback comments.";
+        $_SESSION['flash_error'] = "Please provide both your name and feedback comments.";
     } else {
         // Raw insert allows Stored XSS payload to be saved
         $stmt = $db->prepare("INSERT INTO reviews (user_id, product_id, author_name, rating, comment, is_reviewed_by_staff) 
@@ -26,9 +23,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
             ':rating' => max(1, min(5, $rating)),
             ':comment' => $comment
         ]);
-        $msg = "Thank you! Your feedback has been submitted to our Roastery Quality & Staff Team for review.";
+        $_SESSION['flash_msg'] = "Thank you! Your feedback has been submitted to our Roastery Quality & Staff Team for review.";
     }
+    // PRG Pattern: Redirect to clean GET URL so refreshing does NOT resubmit old comments
+    header("Location: /reviews.php");
+    exit;
 }
+
+$msg = $_SESSION['flash_msg'] ?? null;
+$error = $_SESSION['flash_error'] ?? null;
+unset($_SESSION['flash_msg'], $_SESSION['flash_error']);
+
+$pageTitle = "Customer Feedback & Reviews";
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch products for dropdown
 $products = $db->query("SELECT id, name FROM products ORDER BY id ASC")->fetchAll();
