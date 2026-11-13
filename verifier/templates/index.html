@@ -38,7 +38,7 @@
         }
     </style>
 </head>
-<body>
+<body data-all-solved="{{ 'true' if all_solved else 'false' }}" data-is-locked="{{ 'true' if is_locked else 'false' }}" data-progress="{{ progress_percent }}">
 
 <nav class="navbar navbar-expand-lg navbar-dark px-3 py-2">
     <div class="container-fluid">
@@ -174,7 +174,7 @@
                         <p class="small text-secondary mb-2">{{ ch.objective }}</p>
 
                         <!-- Hint Box (Toggled on request) -->
-                        <div id="hint-box-{{ cid }}" class="hint-box p-3 rounded mb-2 small text-warning" style="display: {{ 'block' if has_viewed_hint else 'none' }};">
+                        <div id="hint-box-{{ cid }}" class="hint-box p-3 rounded mb-2 small text-warning {% if not has_viewed_hint %}d-none{% endif %}">
                             <i class="fa-solid fa-lightbulb me-1"></i> <strong>Hint:</strong> 
                             <span id="hint-text-{{ cid }}">{{ ch.hint }}</span>
                         </div>
@@ -209,11 +209,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const pb = document.getElementById('progress-bar-el');
-    if (pb) pb.style.width = '{{ progress_percent }}%';
+    const { allSolved, isLocked, progress } = document.body.dataset;
+    if (pb && progress) {
+        pb.style.width = progress + '%';
+    }
 
-    {% if all_solved and not is_locked %}
+    if (allSolved === 'true' && isLocked !== 'true') {
         triggerCelebration();
-    {% endif %}
+    }
 });
 
 function triggerCelebration() {
@@ -252,8 +255,8 @@ async function handleSetStudent(e) {
 
 async function toggleHint(flagId) {
     const box = document.getElementById(`hint-box-${flagId}`);
-    if (box.style.display === 'block') {
-        box.style.display = 'none';
+    if (!box.classList.contains('d-none')) {
+        box.classList.add('d-none');
         return;
     }
 
@@ -269,7 +272,7 @@ async function toggleHint(flagId) {
     const data = await res.json();
     if (data.success) {
         document.getElementById(`hint-text-${flagId}`).textContent = data.hint;
-        box.style.display = 'block';
+        box.classList.remove('d-none');
         document.getElementById('hints-count-badge').textContent = data.total_hints_viewed;
     } else {
         alert(data.message);
