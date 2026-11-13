@@ -46,16 +46,18 @@
 
 <script>
 async function resetLabEnvironment() {
-    if (!confirm('⚠️ WARNING: This will reset the target database, delete student review comments, clear exploit files, and reset candidate progress. Reset lab now?')) {
+    if (!confirm('⚠️ WARNING: This will reset the target database, clear all active user sessions, delete student comments, clear exploit files, and reset candidate progress. Reset lab now?')) {
         return;
     }
     try {
+        // Clear client cookies
+        document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
         await fetch('/api/internal-reset.php', { method: 'POST' });
         try {
             await fetch('http://' + window.location.hostname + ':8000/api/reset_lab', { method: 'POST' });
         } catch (_) {}
-        alert('Lab environment and database successfully reset to fresh initial state.');
-        window.location.href = '/reviews.php';
+        alert('Lab environment, user sessions, and database successfully reset to fresh initial state.');
+        window.location.href = '/index.php';
     } catch (e) {
         alert('Reset request error: ' + e.message);
     }

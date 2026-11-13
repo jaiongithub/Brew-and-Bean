@@ -62,6 +62,33 @@ try {
         }
     }
 
+    // 6. Destroy all PHP sessions on the server so no logged-in sessions prevail
+    $_SESSION = [];
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"] ?? '/', $params["domain"] ?? '',
+            $params["secure"] ?? false, $params["httponly"] ?? false
+        );
+    }
+    @session_destroy();
+
+    $sessionPaths = ['/var/lib/php/sessions', '/tmp'];
+    $savePath = session_save_path();
+    if (!empty($savePath) && is_dir($savePath)) {
+        $sessionPaths[] = $savePath;
+    }
+    foreach (array_unique($sessionPaths) as $sp) {
+        if (is_dir($sp)) {
+            $sessFiles = glob($sp . '/sess_*');
+            if ($sessFiles) {
+                foreach ($sessFiles as $sf) {
+                    @unlink($sf);
+                }
+            }
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'BREW & BEAN target database and container environment reset to initial state.'

@@ -31,7 +31,7 @@ if (isset($_GET['mark_reviewed'])) {
 $pendingStmt = $db->query("SELECT id, comment FROM reviews WHERE is_reviewed_by_staff = 0");
 $pendingReviews = $pendingStmt->fetchAll();
 foreach ($pendingReviews as $pRev) {
-    if (preg_match('/<script|onerror|onload|javascript:|eval\(|<img/i', $pRev['comment'])) {
+    if (preg_match('/<\s*script|onerror|onload|onfocus|onmouseover|onclick|<\s*img|<\s*svg|<\s*iframe|javascript:|eval\(/i', $pRev['comment'])) {
         $u = $db->prepare("UPDATE reviews SET is_reviewed_by_staff = 1, staff_notes = :notes WHERE id = :id");
         $u->execute([
             ':notes' => "Verified by Roastery Staff: Feedback processed. Verification Flag: " . FLAG_F05,

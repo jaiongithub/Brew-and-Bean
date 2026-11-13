@@ -68,12 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="/login.php<?= !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : '' ?>">
+            <form method="POST" action="/login.php<?= !empty($_GET['redirect']) ? '?redirect=' . urlencode($_GET['redirect']) : '' ?>" autocomplete="off">
                 <div class="mb-3">
                     <label class="form-label small fw-bold">Username</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" name="username" class="form-control" placeholder="e.g. alex_morgan" value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>" required autofocus>
+                        <input type="text" name="username" id="login_username" class="form-control" placeholder="Enter username" value="" autocomplete="off" required>
                     </div>
                 </div>
 
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        <input type="password" name="password" id="login_password" class="form-control" placeholder="Enter password" autocomplete="new-password" required>
                     </div>
                 </div>
 

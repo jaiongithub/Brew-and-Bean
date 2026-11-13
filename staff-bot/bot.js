@@ -79,12 +79,22 @@ async function runStaffSimulation() {
     async function loginStaff() {
         console.log(`[*] Authenticating staff session as "${STAFF_USER}"...`);
         try {
-            await page.goto(`${BASE_URL}/login.php`, { waitUntil: 'networkidle', timeout: 15000 });
+            await page.goto(`${BASE_URL}/login.php?redirect=/staff/reviews.php`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+            
+            // Check if already authenticated and landed on /staff/reviews.php
+            const urlObj = new URL(page.url());
+            if (urlObj.pathname.startsWith('/staff/')) {
+                console.log('[+] Already authenticated as staff.');
+                return true;
+            }
+
             await page.fill('input[name="username"]', STAFF_USER);
             await page.fill('input[name="password"]', STAFF_PASS);
             await page.click('button[type="submit"]');
-            await page.waitForTimeout(2000);
-            console.log('[+] Staff login completed.');
+            await page.waitForTimeout(2500);
+
+            const postLoginUrl = new URL(page.url());
+            console.log(`[+] Staff login completed. Landed on: ${postLoginUrl.pathname}`);
             return true;
         } catch (err) {
             console.warn('[-] Staff login attempt failed (server may still be starting):', err.message);
@@ -95,18 +105,18 @@ async function runStaffSimulation() {
     // Main polling cycle
     async function cycle() {
         try {
-            // Ensure logged in
-            const currentUrl = page.url();
-            if (!currentUrl.includes('/staff/')) {
+            console.log(`[*] [${new Date().toLocaleTimeString()}] Staff visiting /staff/reviews.php to inspect pending feedback...`);
+            await page.goto(`${BASE_URL}/staff/reviews.php`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+            // If redirected to login page, re-authenticate immediately
+            const currentUrl = new URL(page.url());
+            if (currentUrl.pathname.includes('login.php') || !currentUrl.pathname.startsWith('/staff/')) {
+                console.log('[*] Session unauthenticated or redirected to login. Re-authenticating staff session...');
                 const loggedIn = await loginStaff();
-                if (!loggedIn) {
-                    setTimeout(cycle, 10000);
-                    return;
+                if (loggedIn) {
+                    await page.goto(`${BASE_URL}/staff/reviews.php`, { waitUntil: 'domcontentloaded', timeout: 15000 });
                 }
             }
-
-            console.log(`[*] [${new Date().toLocaleTimeString()}] Staff visiting /staff/reviews.php to inspect pending feedback...`);
-            await page.goto(`${BASE_URL}/staff/reviews.php`, { waitUntil: 'load', timeout: 15000 });
 
             // Allow 6 seconds for any injected scripts/images to execute
             await page.waitForTimeout(6000);
