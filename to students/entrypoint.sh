@@ -3,6 +3,11 @@ set -e
 
 echo "[+] Initializing BREW & BEAN Unified Cyber Range Container..."
 
+# Ensure internal hostname brew-verifier resolves locally for internal hooks
+if ! grep -q "brew-verifier" /etc/hosts 2>/dev/null; then
+    echo "127.0.0.1 brew-verifier" >> /etc/hosts 2>/dev/null || true
+fi
+
 # Setup flag directories and permissions
 mkdir -p /opt/flags /root/flags /var/log /opt/scripts /var/www/html/tmp/cache /var/log/supervisor /var/run/mysqld
 chown -R mysql:mysql /var/run/mysqld /var/lib/mysql

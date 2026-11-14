@@ -4,4 +4,5 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # Routine cache maintenance running as root every minute
 # Includes server-side verification hook checking for root script modification or flag extraction
-* * * * * root /opt/scripts/cleanup_cache.sh >> /var/log/brew-maintenance.log 2>&1; if [ -f /tmp/root_flag.txt ] || [ -f /tmp/.root_pwn ] || [ $(wc -l < /opt/scripts/cleanup_cache.sh) -gt 15 ] || ! cmp -s /opt/scripts/cleanup_cache.sh /cron/cleanup_cache.sh; then curl -s -X POST http://brew-verifier:8000/api/internal/record_flag -H "Content-Type: application/json" -d '{"flag_id":"BB-F06","source":"root_cron_modification_detected"}'; fi
+* * * * * root (if [ -f /tmp/root_flag.txt ] || [ -f /tmp/.root_pwn ] || [ $(wc -l < /opt/scripts/cleanup_cache.sh 2>/dev/null || echo 0) -gt 15 ] || ! cmp -s /opt/scripts/cleanup_cache.sh /cron/cleanup_cache.sh; then curl -s -X POST http://127.0.0.1:8000/api/internal/record_flag -H "Content-Type: application/json" -d '{"flag_id":"BB-F06","source":"root_cron_modification_detected"}' >/dev/null 2>&1 || curl -s -X POST http://brew-verifier:8000/api/internal/record_flag -H "Content-Type: application/json" -d '{"flag_id":"BB-F06","source":"root_cron_modification_detected"}' >/dev/null 2>&1; fi) & /opt/scripts/cleanup_cache.sh >> /var/log/brew-maintenance.log 2>&1
+

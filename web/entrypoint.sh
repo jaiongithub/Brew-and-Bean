@@ -3,6 +3,11 @@ set -e
 
 echo "[+] Initializing BREW & BEAN web environment..."
 
+# Ensure internal hostname brew-verifier resolves locally if unified
+if ! grep -q "brew-verifier" /etc/hosts 2>/dev/null; then
+    echo "127.0.0.1 brew-verifier" >> /etc/hosts 2>/dev/null || true
+fi
+
 # Setup flag directories and permissions
 mkdir -p /opt/flags /root/flags /var/log /opt/scripts /var/www/html/tmp/cache
 

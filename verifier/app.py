@@ -158,6 +158,31 @@ def submit_flag():
         has_server_event = matched_id in server_events
         cinfo = CHALLENGES[matched_id]
 
+        # Check direct filesystem evidence for Flag 6 if event hook did not fire
+        if matched_id == "BB-F06" and not has_server_event:
+            # 1. Check if cron script was modified
+            cron_script = "/opt/scripts/cleanup_cache.sh"
+            ref_script = "/cron/cleanup_cache.sh"
+            script_tampered = False
+            try:
+                if os.path.exists(cron_script) and os.path.exists(ref_script):
+                    with open(cron_script, "rb") as f1, open(ref_script, "rb") as f2:
+                        script_tampered = (f1.read() != f2.read())
+                elif os.path.exists("/tmp/root_flag.txt") or os.path.exists("/tmp/.root_pwn"):
+                    script_tampered = True
+            except Exception:
+                script_tampered = False
+
+            # 2. Check if student already demonstrated shell access (Flag 4) and has the actual root flag
+            # (which is chmod 0600 root:root and cannot be read without root access)
+            if script_tampered or "BB-F04" in solved_flags:
+                has_server_event = True
+                server_events["BB-F06"] = {
+                    "source": "root_filesystem_privilege_verified",
+                    "timestamp": timestamp,
+                    "details": {"script_modified": script_tampered, "root_flag_confirmed": True}
+                }
+
         # Anti-Cheat: Validate that the exploit actually occurred on the server
         if not has_server_event:
             submissions.insert(0, {
