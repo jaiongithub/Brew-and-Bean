@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REGISTRY_USER=${DOCKER_USER:-"jaiongithub"}
+REGISTRY_USER=${DOCKER_USER:-"jaiganesh90"}
 IMAGE_NAME="brewandbean"
 TAG="latest"
 
@@ -25,3 +25,4 @@ docker push ${REGISTRY_USER}/${IMAGE_NAME}:${TAG}
 
 echo ""
 echo "[+] Successfully built and published ${REGISTRY_USER}/${IMAGE_NAME}:${TAG}!"
+

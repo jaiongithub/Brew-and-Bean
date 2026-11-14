@@ -5,3 +5,4 @@ docker rm brewandbean
 echo.
 echo [+] Lab successfully stopped and cleared.
 pause
+

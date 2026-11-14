@@ -55,3 +55,4 @@ chmod -R 700 /opt/verifier /opt/staff-bot
 
 echo "[+] Starting supervisor process manager..."
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf
+

@@ -18,7 +18,7 @@ Welcome to the **BREW & BEAN** Penetration Testing Examination. This assessment 
 
 #### Option B: Using a Single Docker Command
 ```bash
-docker run -d --name brewandbean -p 80:80 -p 8000:8000 jaiongithub/brewandbean:latest
+docker run -d --name brewandbean -p 80:80 -p 8000:8000 jaiganesh90/brewandbean:latest
 ```
 
 Once running, the lab exposes two web interfaces:
@@ -81,3 +81,4 @@ Once running, the lab exposes two web interfaces:
 The `wordlists/` folder contains:
 - `usernames.txt` — Candidate usernames for authentication auditing (Flag 1).
 - `passwords.txt` — Candidate passwords for authentication auditing (Flag 1).
+

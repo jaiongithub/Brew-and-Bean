@@ -9,7 +9,7 @@ docker stop brewandbean >nul 2>&1
 docker rm brewandbean >nul 2>&1
 
 echo Starting BREW ^& BEAN container on ports 80 and 8000...
-docker run -d --name brewandbean -p 80:80 -p 8000:8000 jaiongithub/brewandbean:latest
+docker run -d --name brewandbean -p 80:80 -p 8000:8000 jaiganesh90/brewandbean:latest
 
 if %errorlevel% neq 0 (
     echo.
@@ -33,3 +33,4 @@ start http://localhost
 echo.
 echo Keep this window open or press any key to close. (Lab will continue running in background)
 pause
+

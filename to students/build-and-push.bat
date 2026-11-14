@@ -1,5 +1,5 @@
 @echo off
-set REGISTRY_USER=jaiongithub
+set REGISTRY_USER=jaiganesh90
 set IMAGE_NAME=brewandbean
 set TAG=latest
 
@@ -42,3 +42,4 @@ if %errorlevel% neq 0 (
 echo.
 echo [+] Successfully built and published %REGISTRY_USER%/%IMAGE_NAME%:%TAG%!
 pause
+
