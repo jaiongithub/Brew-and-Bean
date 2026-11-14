@@ -12,3 +12,6 @@ Thumbs.db
 web/src/tmp/cache/*
 !web/src/tmp/cache/.gitkeep
 
+# Build artifacts
+to students/dist/
+
