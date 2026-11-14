@@ -5,18 +5,37 @@ Welcome to the **BREW & BEAN** Penetration Testing Examination. This assessment 
 
 ---
 
-## 1. Quick Start Guide
+## 1. Prerequisites: Installing Docker on Kali Linux
 
-### Prerequisites
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows / macOS) or Docker Engine (Linux) installed and running.
+If Docker is not already installed on your Kali Linux virtual machine, run the following commands in Terminal:
 
-### Launching the Lab Environment
+```bash
+# 1. Update package lists
+sudo apt update
 
-#### Option A: Using the Launcher Script (Recommended)
-- **Windows:** Double-click `start-lab.bat` (or run `./start-lab.bat` in PowerShell/CMD).
-- **macOS / Linux:** Run `chmod +x start-lab.sh && ./start-lab.sh` in Terminal.
+# 2. Install Docker and Docker Compose
+sudo apt install -y docker.io docker-compose
 
-#### Option B: Using a Single Docker Command
+# 3. Enable and start the Docker service
+sudo systemctl enable --now docker
+
+# 4. (Optional) Allow running docker without sudo (requires re-login or newgrp docker)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# 5. Verify installation
+docker --version
+```
+
+> **For macOS / Windows Users:** Install and run [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+> *Apple Silicon Mac (M1/M2/M3/M4) users:* Add `--platform linux/amd64` to your `docker run` command if prompted.
+
+---
+
+## 2. Launching the Lab Environment
+
+Run the following command in your terminal to pull and start the examination container:
+
 ```bash
 docker run -d --name brewandbean -p 80:80 -p 8000:8000 jaiganesh90/brewandbean:latest
 ```
@@ -27,7 +46,7 @@ Once running, the lab exposes two web interfaces:
 
 ---
 
-## 2. Examination Workflow
+## 3. Examination Workflow
 
 ```
 ┌─────────────────────────┐          ┌─────────────────────────┐
@@ -66,19 +85,20 @@ Once running, the lab exposes two web interfaces:
 
 ---
 
-## 3. Stopping and Resetting the Lab
+## 4. Stopping and Resetting the Lab
 
-- **Resetting the Lab to Fresh State:** Click the red **"Reset Lab"** button on the Verification Portal or in the web application footer. This resets all databases and sessions back to initial state.
-- **Stopping the Container:**
-  - Run `stop-lab.bat` (Windows) or `./stop-lab.sh` (Linux/macOS), or run:
+- **Resetting the Lab to Fresh State:** Click the red **"Reset Lab"** button on the Verification Portal or in the web application footer. This resets all databases, sessions, and comments back to initial state.
+- **Stopping and Removing the Container:**
   ```bash
   docker stop brewandbean && docker rm brewandbean
   ```
 
 ---
 
-## 4. Provided Assets & Wordlists
+## 5. Provided Wordlists
+
 The `wordlists/` folder contains:
 - `usernames.txt` — Candidate usernames for authentication auditing (Flag 1).
 - `passwords.txt` — Candidate passwords for authentication auditing (Flag 1).
+
 
